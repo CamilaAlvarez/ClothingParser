@@ -1,16 +1,9 @@
-
 #include <iostream>
 #include <fstream>
 #include "json.hpp"
 #include <thread>
-#include <mutex>
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include <cstdio>
-#include <iostream>
-#include <memory>
-#include <stdexcept>
-#include <string>
 
 #define THREAD_NUMBER 10
 
