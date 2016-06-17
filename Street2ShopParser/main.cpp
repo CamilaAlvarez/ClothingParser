@@ -149,21 +149,18 @@ int main(int argc, char *argv[]) {
     std::mutex retrievalMutex;
     std::mutex testingMutex;
     std::mutex trainingMutex;
-
+    std::thread thread;
     for (int i = 0; i < THREAD_NUMBER; i++) {
         if(i<2){
-            std::thread thread(retrievalImgsFunction, &retrieval, &retrievalMutex);
-            threads.push_back(&thread);
+            thread = std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex);
         }
         else if(i<6){
-            std::thread thread(cropPhotoFunction, &testing,"testing", &testingMutex);
-            threads.push_back(&thread);
+            thread = std::thread(cropPhotoFunction, &testing,"testing", &testingMutex);
         }
         else{
-            std::thread thread(cropPhotoFunction, &training,"training", &trainingMutex);
-            threads.push_back(&thread);
+            thread = std::thread(cropPhotoFunction, &training,"training", &trainingMutex);
         }
-
+        threads.push_back(&thread);
 
     }
 
