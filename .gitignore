@@ -27,6 +27,7 @@
 *.exe
 *.out
 *.app
+*.bin
 
 *.idea
 *.DS_STORE
