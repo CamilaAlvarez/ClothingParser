@@ -14,3 +14,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11 -std=c++0x -pthread")
 set(SOURCE_FILES main.cpp)
 add_executable(Street2ShopParser ${SOURCE_FILES})
 target_link_libraries(Street2ShopParser ${OpenCV_LIBS})
+set_target_properties(Street2ShopParser PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+)
