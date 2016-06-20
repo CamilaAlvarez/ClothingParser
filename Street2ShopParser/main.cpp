@@ -2,6 +2,7 @@
 #include <fstream>
 #include "json.hpp"
 #include <thread>
+#include <mutex>
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
