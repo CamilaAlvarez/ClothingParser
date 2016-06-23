@@ -36,11 +36,12 @@ void retrievalImgsFunction(json* retrievalJson, std::mutex* m){
         retrievalJson->erase(0);
         m->unlock();
 
-        std::string nameCmd = "ls "+photoDirectory+" | grep "+std::to_string(photo)+"$";
+        std::string nameCmd = "ls "+photoDirectory+" | grep 0"+std::to_string(photo)+"$ | tr -d \"\n\" ";
         std::string name = exec(nameCmd.c_str());
-        std::string cmd = "cp" +photoDirectory+name+" "+ finalDirectory+"retrieval/"+category+"/"+std::to_string(product)
+        std::string cmd = "cp " +photoDirectory+name+" "+ finalDirectory+"retrieval/"+category+"/"+std::to_string(product)
                       +"-"+name;
-        exec(cmd.c_str());
+	exec(cmd.c_str());
+	std::cout<<std::to_string(photo)<<std::endl;
         m->lock();
     }
     m->unlock();
@@ -55,11 +56,14 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
         contentJson->erase(photo);
         m->unlock();
 
-        std::string nameCmd = "ls "+photoDirectory+" | grep "+photo+"$";
+        std::string nameCmd = "ls "+photoDirectory+" | grep 0"+photo+"$ | tr -d \"\n\"";
         std::string name = exec(nameCmd.c_str());
         std::string imgname = photoDirectory+name;
         cv::Mat img = cv::imread(imgname);
-
+	if(img.data==NULL){
+	m->lock();
+	continue;
+	}
         for(json& box : value){
             json bbox = box["bbox"];
             std::string category = box["category"];
@@ -69,13 +73,19 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
             int width = bbox["width"];
             int height = bbox["height"];
             cv::Rect rect(left, top, width, height);
-            cv::Mat productImg = img(rect);
+	    cv::Mat productImg = img(rect);
 
+            if(0>left || 0 > width || left+width > productImg.cols || 0 > top || 0 > height || top+height > productImg.rows){
+		std::cout<<photo<<std::endl;		    
+		m->lock();
+		continue;
+	    }
             std::string boxString = "["+std::to_string(left)+","+std::to_string(top)+
                     ","+std::to_string(width)+","+std::to_string(height)+"]";
             std::string filename = finalDirectory+type+"/"+category+"/"+std::to_string(product)
                                    +"-"+boxString+"-"+name;
             cv::imwrite(filename, productImg);
+	    std::cout<<photo<<std::endl;
         }
         m->lock();
     }
@@ -143,23 +153,25 @@ int main(int argc, char *argv[]) {
     std::mutex retrievalMutex;
     std::mutex testingMutex;
     std::mutex trainingMutex;
-    std::thread thread;
+    std::thread* thread;    
     for (int i = 0; i < THREAD_NUMBER; i++) {
         if(i<2){
-            thread = std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex);
+            thread = new std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex);
         }
         else if(i<6){
-            thread = std::thread(cropPhotoFunction, &testing,"testing", &testingMutex);
+            thread = new std::thread(cropPhotoFunction, &testing,"testing", &testingMutex);
         }
         else{
-            thread = std::thread(cropPhotoFunction, &training,"training", &trainingMutex);
+            thread = new std::thread(cropPhotoFunction, &training,"training", &trainingMutex);
         }
-        threads.push_back(&thread);
+        threads.push_back(thread);
 
     }
 
-    for(std::thread*& t : threads){
-        (*t).join();
-    }
+	for(std::thread*& t : threads){
+		t->join();
+		delete t;
+	}  	
+
     return 0;
 }
