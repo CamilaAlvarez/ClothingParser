@@ -6,6 +6,12 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
+//for mmap (memory map)
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstring>
 #define THREAD_NUMBER 8
 
 
@@ -13,6 +19,30 @@ using json = nlohmann::json;
 
 std::string photoDirectory;
 std::string finalDirectory;
+
+void handle_error(const char* msg){
+    perror(msg);
+    exit(255);
+}
+
+const char* map_file(const char* filename, size_t& size){
+    int fd = open(filename, O_RDONLY);
+    if(fd == -1)
+        handle_error("open");
+
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+
+    struct stat sb;
+    if(fstat(fd, &sb) == -1)
+        handle_error("fstat");
+
+    size = sb.st_size;
+    const char* addr = static_cast<const char *>(mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0u));
+    if(addr == MAP_FAILED)
+        handle_error("mmap");
+    close(fd);
+    return addr;
+}
 
 std::string exec(const char* cmd) {
     char buffer[128];
@@ -114,8 +144,34 @@ int main(int argc, char *argv[]) {
     std::string jsonDirectory = std::string(argv[1]);
     photoDirectory = std::string(argv[2]);
     finalDirectory = std::string(argv[3]);
+    size_t size;
+    char line[1000];
+    const char* f = map_file("images.txt", size);
+    const char* l = f+size;
+    int count = 0;
+    std::map<std::string, std::string> photoMap;
+    while(f && f!=l) {
+        //if((f = static_cast<const char*>(memchr(f, '\n', l-f)))){
+        if (*f == '\n') {
+            line[count] = '\0';
+            std::string stringLine= line;
+            unsigned long tabLocation = stringLine.find('\t');
+            std::string key = stringLine.substr(0, tabLocation-1);
+            std::string value = stringLine.substr(tabLocation+1);
+            photoMap[key] = value;
+            count = 0;
+        }
+        else{
+            line[count]=*f;
+            count++;
+        }
+        f++;
 
-    std::cout<<photoDirectory<<std::endl;
+        //}
+    }
+
+
+
     std::vector<std::string> categories = {"bags", "belts", "dresses", "eyewear",
                                            "footwear", "hats", "leggings", "outerwear",
                                            "pants", "skirts", "tops"};
