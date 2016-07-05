@@ -6,7 +6,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-#define THREAD_NUMBER 10
+#define THREAD_NUMBER 8
 
 
 using json = nlohmann::json;
@@ -26,21 +26,24 @@ std::string exec(const char* cmd) {
     return result;
 }
 
-void retrievalImgsFunction(json* retrievalJson, std::mutex* m){
+void retrievalImgsFunction(json* retrievalJson, std::mutex* m){  
     m->lock();
     while(retrievalJson->size()>0){
         json element = (*retrievalJson)[0];
         unsigned long photo = element["photo"];
         unsigned long product = element["product"];
         std::string category = element["category"];
-        retrievalJson->erase(0);
-        m->unlock();
-
-        std::string nameCmd = "ls "+photoDirectory+" | grep "+std::to_string(photo)+"$";
+	retrievalJson->erase(retrievalJson->begin());
+	m->unlock();
+	std::string photoNumber = std::to_string(photo);
+	while(photoNumber.length()<9){
+		photoNumber = "0"+photoNumber;
+	}
+        std::string nameCmd = "ls "+photoDirectory+" | grep "+photoNumber+"$ | tr -d \"\n\" ";
         std::string name = exec(nameCmd.c_str());
-        std::string cmd = "cp" +photoDirectory+name+" "+ finalDirectory+"retrieval/"+category+"/"+std::to_string(product)
-                      +"-"+name;
-        exec(cmd.c_str());
+        std::string cmd = "cp '" +photoDirectory+name+"' '"+ finalDirectory+"retrieval/"+category+"/"+std::to_string(product)+"-"+name+"'";
+       	exec(cmd.c_str());
+	std::cout<<"name: "<<name<<std::endl;
         m->lock();
     }
     m->unlock();
@@ -54,12 +57,18 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
         json value = keyValue.value();
         contentJson->erase(photo);
         m->unlock();
-
-        std::string nameCmd = "ls "+photoDirectory+" | grep "+photo+"$";
+	while(photo.length()<9){
+		photo = "0"+photo;
+	}
+        
+        std::string nameCmd = "ls "+photoDirectory+" | grep "+photo+"$  | tr -d \"\n\"";
         std::string name = exec(nameCmd.c_str());
         std::string imgname = photoDirectory+name;
         cv::Mat img = cv::imread(imgname);
-
+	if(!img.data){
+		std::cout<<"corrupted image: "<<imgname<<std::endl;
+		continue;
+	}
         for(json& box : value){
             json bbox = box["bbox"];
             std::string category = box["category"];
@@ -75,7 +84,8 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
                     ","+std::to_string(width)+","+std::to_string(height)+"]";
             std::string filename = finalDirectory+type+"/"+category+"/"+std::to_string(product)
                                    +"-"+boxString+"-"+name;
-            cv::imwrite(filename, productImg);
+            cv::imwrite(filename, productImg);    	
+	    std::cout<<"name: "<<filename<<std::endl;
         }
         m->lock();
     }
@@ -86,7 +96,6 @@ void parseJson(std::string filename, json& resultContainer, std::string category
     std::ifstream fileReader;
     fileReader.open(filename);
     json testJson = json::parse(fileReader);
-
     for(json& element : testJson){
         unsigned long photoId = element["photo"];
         std::string photoIdStr = std::to_string(photoId);
@@ -105,6 +114,8 @@ int main(int argc, char *argv[]) {
     std::string jsonDirectory = std::string(argv[1]);
     photoDirectory = std::string(argv[2]);
     finalDirectory = std::string(argv[3]);
+
+    std::cout<<photoDirectory<<std::endl;
     std::vector<std::string> categories = {"bags", "belts", "dresses", "eyewear",
                                            "footwear", "hats", "leggings", "outerwear",
                                            "pants", "skirts", "tops"};
@@ -138,28 +149,28 @@ int main(int argc, char *argv[]) {
         std::string trainFile = jsonDirectory+trainingFiles+category+".json";
         parseJson(trainFile, training, category);
     }
+    
     //thread pointers, because threads are not copyable
-    std::vector<std::thread*> threads;
+    std::vector<std::thread> threads;
     std::mutex retrievalMutex;
     std::mutex testingMutex;
     std::mutex trainingMutex;
     std::thread thread;
     for (int i = 0; i < THREAD_NUMBER; i++) {
         if(i<2){
-            thread = std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex);
+            threads.push_back(std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex));
         }
         else if(i<6){
-            thread = std::thread(cropPhotoFunction, &testing,"testing", &testingMutex);
+            threads.push_back(std::thread(cropPhotoFunction, &testing,"testing", &testingMutex));
         }
         else{
-            thread = std::thread(cropPhotoFunction, &training,"training", &trainingMutex);
+            threads.push_back( std::thread(cropPhotoFunction, &training,"training", &trainingMutex));
         }
-        threads.push_back(&thread);
 
     }
 
-    for(std::thread*& t : threads){
-        (*t).join();
+    for(std::thread& t : threads){
+        t.join();
     }
     return 0;
 }
