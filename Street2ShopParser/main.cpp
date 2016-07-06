@@ -19,6 +19,7 @@ using json = nlohmann::json;
 
 std::string photoDirectory;
 std::string finalDirectory;
+std::map<std::string, std::string> photoMap;
 
 void handle_error(const char* msg){
     perror(msg);
@@ -69,11 +70,11 @@ void retrievalImgsFunction(json* retrievalJson, std::mutex* m){
 	while(photoNumber.length()<9){
 		photoNumber = "0"+photoNumber;
 	}
-        std::string nameCmd = "ls "+photoDirectory+" | grep "+photoNumber+"$ | tr -d \"\n\" ";
-        std::string name = exec(nameCmd.c_str());
-        std::string cmd = "cp '" +photoDirectory+name+"' '"+ finalDirectory+"retrieval/"+category+"/"+std::to_string(product)+"-"+name+"'";
+        //std::string nameCmd = "ls "+photoDirectory+" | grep "+photoNumber+"$ | tr -d \"\n\" ";
+        std::string name = photoMap[photoNumber];
+        std::string cmd = "cp '" +name+"' '"+ finalDirectory+"retrieval/"+category+"/"+photoNumber+".jpg?"+std::to_string(product)+"'";
        	exec(cmd.c_str());
-	std::cout<<"name: "<<name<<std::endl;
+	    std::cout<<"name: "<<name<<std::endl;
         m->lock();
     }
     m->unlock();
@@ -91,12 +92,12 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
 		photo = "0"+photo;
 	}
         
-        std::string nameCmd = "ls "+photoDirectory+" | grep "+photo+"$  | tr -d \"\n\"";
-        std::string name = exec(nameCmd.c_str());
-        std::string imgname = photoDirectory+name;
-        cv::Mat img = cv::imread(imgname);
+        //std::string nameCmd = "ls "+photoDirectory+" | grep "+photo+"$  | tr -d \"\n\"";
+        std::string name = photoMap[photo];
+        //std::string imgname = photoDirectory+name;
+        cv::Mat img = cv::imread(name);
 	if(!img.data){
-		std::cout<<"corrupted image: "<<imgname<<std::endl;
+		std::cout<<"corrupted image: "<<name<<std::endl;
 		continue;
 	}
         for(json& box : value){
@@ -112,10 +113,9 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
 
             std::string boxString = "["+std::to_string(left)+","+std::to_string(top)+
                     ","+std::to_string(width)+","+std::to_string(height)+"]";
-            std::string filename = finalDirectory+type+"/"+category+"/"+std::to_string(product)
-                                   +"-"+boxString+"-"+name;
+            std::string filename = finalDirectory+type+"/"+category+"/"+boxString+"-"+photo+".jpg?"+std::to_string(product);
             cv::imwrite(filename, productImg);    	
-	    std::cout<<"name: "<<filename<<std::endl;
+	        std::cout<<"name: "<<filename<<std::endl;
         }
         m->lock();
     }
@@ -149,7 +149,6 @@ int main(int argc, char *argv[]) {
     const char* f = map_file("images.txt", size);
     const char* l = f+size;
     int count = 0;
-    std::map<std::string, std::string> photoMap;
     while(f && f!=l) {
         //if((f = static_cast<const char*>(memchr(f, '\n', l-f)))){
         if (*f == '\n') {
