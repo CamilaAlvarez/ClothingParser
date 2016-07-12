@@ -41,7 +41,7 @@ const char* map_file(const char* filename, size_t& size){
     const char* addr = static_cast<const char *>(mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0u));
     if(addr == MAP_FAILED)
         handle_error("mmap");
-    close(fd);
+    close(fd); 
     return addr;
 }
 
@@ -98,6 +98,7 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
         cv::Mat img = cv::imread(name);
 	if(!img.data){
 		std::cout<<"corrupted image: "<<name<<std::endl;
+		m->lock();
 		continue;
 	}
         for(json& box : value){
@@ -108,14 +109,19 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
             int left = bbox["left"];
             int width = bbox["width"];
             int height = bbox["height"];
+	    if(top+height > img.rows)
+		height = img.rows - top;
+	    if(left+width > img.cols)
+		width = img.cols -left;
             cv::Rect rect(left, top, width, height);
+	    std::cout<<"name: "<<name<<std::endl;
             cv::Mat productImg = img(rect);
 
             std::string boxString = "["+std::to_string(left)+","+std::to_string(top)+
                     ","+std::to_string(width)+","+std::to_string(height)+"]";
             std::string filename = finalDirectory+type+"/"+category+"/"+boxString+"-"+photo+".jpg?"+std::to_string(product);
             cv::imwrite(filename, productImg);    	
-	        std::cout<<"name: "<<filename<<std::endl;
+	    //    std::cout<<"name: "<<filename<<std::endl;
         }
         m->lock();
     }
@@ -146,7 +152,7 @@ int main(int argc, char *argv[]) {
     finalDirectory = std::string(argv[3]);
     size_t size;
     char line[1000];
-    const char* f = map_file("images.txt", size);
+    const char* f = map_file("/home/calvarez/Datasets/DatasetStreet2Shop/photos/images.txt", size);
     const char* l = f+size;
     int count = 0;
     while(f && f!=l) {
@@ -155,7 +161,7 @@ int main(int argc, char *argv[]) {
             line[count] = '\0';
             std::string stringLine= line;
             unsigned long tabLocation = stringLine.find('\t');
-            std::string key = stringLine.substr(0, tabLocation-1);
+            std::string key = stringLine.substr(0, tabLocation);
             std::string value = stringLine.substr(tabLocation+1);
             photoMap[key] = value;
             count = 0;
@@ -168,7 +174,6 @@ int main(int argc, char *argv[]) {
 
         //}
     }
-
 
 
     std::vector<std::string> categories = {"bags", "belts", "dresses", "eyewear",
@@ -215,7 +220,7 @@ int main(int argc, char *argv[]) {
         if(i<2){
             threads.push_back(std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex));
         }
-        else if(i<6){
+        else if(i<5){
             threads.push_back(std::thread(cropPhotoFunction, &testing,"testing", &testingMutex));
         }
         else{
