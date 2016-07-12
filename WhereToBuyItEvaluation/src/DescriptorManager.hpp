@@ -5,14 +5,22 @@
 #ifndef WHERETOBUYITEVALUATION_DESCRIPTORMANAGER_HPP
 #define WHERETOBUYITEVALUATION_DESCRIPTORMANAGER_HPP
 
-#include "cvision/caffe_predictor.h"
+#include <cvision/caffe_predictor.h>
+#include <jmsr/JUtil.h>
+#include <iostream>
+#include <map>
+
 
 class DescriptorManager {
 public:
-    DescriptorManager(std::string _prototxt, std::string _caffemodel, int im_w, int im_h, int mode=CAFFE_CPU_MODE):
-            predictor(CaffePredictor(_prototxt, _caffemodel, im_w, im_h, mode)){}
+    DescriptorManager(const std::string &config_file);
+    void calculateDescriptors(const std::string &image_filename, std::map<std::string, long*>& descriptor_map);
+
 private:
+    ConfigFile network_config_file;
+    std::string desc_layer_name;
     CaffePredictor predictor;
+
 };
 
 
