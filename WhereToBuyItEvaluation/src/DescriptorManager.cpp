@@ -3,7 +3,63 @@
 //
 
 #include "DescriptorManager.hpp"
-#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstring>
+#include <fstream>
+
+static void handle_error(const char* msg){
+    perror(msg);
+    exit(255);
+}
+
+static const char* map_file(const char* filename, size_t& size){
+    int fd = open(filename, O_RDONLY);
+    if(fd == -1)
+        handle_error("open");
+
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+
+    struct stat sb;
+    if(fstat(fd, &sb) == -1)
+        handle_error("fstat");
+
+    size = sb.st_size;
+    const char* addr = static_cast<const char *>(mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0u));
+    if(addr == MAP_FAILED)
+        handle_error("mmap");
+    close(fd);
+    return addr;
+}
+
+static std::map<std::string, std::string> loadFileToMap(const char *image_filename){
+    size_t file_size;
+    const char *file = map_file(image_filename, file_size);
+    const char *end_file = file+file_size;
+    char line[1000];
+    int count = 0;
+
+    std::map<std::string, std::string> image_map;
+    while(file && file!=end_file){
+        if(*file == '\n'){
+            line[count] = '\n';
+            std::string file_line = line;
+            unsigned long tab_location = file_line.find('\t');
+            std::string id = file_line.substr(0,tab_location);
+            std::string image = file_line.substr(tab_location+1);
+            image_map[id] = image;
+        }
+        else{
+            line[count++] = *file;
+        }
+        file++;
+    }
+
+    return image_map;
+}
+
 
 DescriptorManager::DescriptorManager(const std::string &config_file):network_config_file(ConfigFile(config_file, '\t'))
 {
@@ -24,4 +80,41 @@ DescriptorManager::DescriptorManager(const std::string &config_file):network_con
     int mode = network_config_file.getValue("CAFFE_MODE").compare("GPU") == 0 ? CAFFE_GPU_MODE : CAFFE_CPU_MODE;
 
     predictor = CaffePredictor(prototxt, caffe_model, image_width, image_height, mode);
+}
+
+void DescriptorManager::calculateDescriptors(const std::string &image_filename) {
+
+    std::map<std::string, std::string> image_map = loadFileToMap(image_filename.c_str());
+    typedef std::map<std::string, std::string>::iterator map_iter;
+    for(map_iter iter = image_map.begin(); iter != image_map.end(); ++iter){
+        float *desc = predictor.getCaffeDescriptor(iter->second, &desc_size, desc_layer_name);
+        //To avoid memory leaks
+        if(descriptor_map.find(iter->first)!=descriptor_map.end())
+            delete descriptor_map[iter->first];
+
+        descriptor_map[iter->first] = desc;
+    }
+
+}
+
+void DescriptorManager::saveDescriptors(const std::string &output) {
+    typedef std::map<std::string, float *>::iterator map_iter;
+    std::vector<float> values;
+    values.push_back(desc_size);
+    for (map_iter iter = descriptor_map.begin(); iter != descriptor_map.end(); ++iter) {
+        values.push_back(std::stof(iter->first));
+        for (int i = 0; i < desc_size; i++)
+            values.push_back(iter->second[i]);
+    }
+    std::ofstream output_file(output);
+    output_file.write(reinterpret_cast<char *>(&values[0]), values.size()* sizeof(float));
+    output_file.close();
+
+}
+
+DescriptorManager::~DescriptorManager() {
+    typedef std::map<std::string, float *>::iterator map_iter;
+
+    for(map_iter iter= descriptor_map.begin(); iter!=descriptor_map.end(); ++iter)
+        delete iter->second;
 }
