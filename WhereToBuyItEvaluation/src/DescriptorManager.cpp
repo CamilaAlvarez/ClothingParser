@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 
 static void handle_error(const char* msg){
     perror(msg);
@@ -61,7 +62,7 @@ static std::map<std::string, std::string> loadFileToMap(const char *image_filena
 }
 
 
-DescriptorManager::DescriptorManager(const std::string &config_file):network_config_file(ConfigFile(config_file, '\t'))
+DescriptorManager::DescriptorManager(const std::string &config_file):network_config_file(ConfigFile(config_file, '\t')), predictor()
 {
     JUtil::jmsr_assert(network_config_file.isDefined("CAFFE_DIR"), "Missing CAFFE_DIR parameter");
     JUtil::jmsr_assert(network_config_file.isDefined("PROTOTXT"), "Missing PROTOTXT parameter");
@@ -79,7 +80,7 @@ DescriptorManager::DescriptorManager(const std::string &config_file):network_con
     int image_height= std::stoi(network_config_file.getValue("IMAGE_HEIGHT"));
     int mode = network_config_file.getValue("CAFFE_MODE").compare("GPU") == 0 ? CAFFE_GPU_MODE : CAFFE_CPU_MODE;
 
-    predictor = CaffePredictor(prototxt, caffe_model, image_width, image_height, mode);
+    this->predictor.load(prototxt, caffe_model, image_width, image_height, mode);
 }
 
 void DescriptorManager::calculateDescriptors(const std::string &image_filename) {
@@ -87,7 +88,7 @@ void DescriptorManager::calculateDescriptors(const std::string &image_filename) 
     std::map<std::string, std::string> image_map = loadFileToMap(image_filename.c_str());
     typedef std::map<std::string, std::string>::iterator map_iter;
     for(map_iter iter = image_map.begin(); iter != image_map.end(); ++iter){
-        float *desc = predictor.getCaffeDescriptor(iter->second, &desc_size, desc_layer_name);
+        float *desc = this->predictor.getCaffeDescriptor(iter->second, &desc_size, desc_layer_name);
         //To avoid memory leaks
         if(descriptor_map.find(iter->first)!=descriptor_map.end())
             delete descriptor_map[iter->first];
