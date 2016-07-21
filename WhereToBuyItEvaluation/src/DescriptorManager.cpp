@@ -119,6 +119,7 @@ void DescriptorManager::saveDescriptors(const std::string &output) {
             values.push_back(iter->second[i]);
     }
     std::ofstream output_file(output);
+    output_file.write(reinterpret_cast<char *>(values.size()), sizeof(float));
     output_file.write(reinterpret_cast<char *>(&values[0]), values.size()* sizeof(float));
     output_file.close();
 
