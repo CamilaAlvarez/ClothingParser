@@ -24,6 +24,7 @@ private:
     std::map<std::string, float *> descriptor_map; //memory has to be freed when descriptors are no longer used
     CaffePredictor predictor;
     int desc_size;
+    std::map<std::string, std::string> invalid_image_map;
 
 };
 

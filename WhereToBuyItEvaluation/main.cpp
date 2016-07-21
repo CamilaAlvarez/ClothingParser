@@ -4,8 +4,8 @@
 using namespace std;
 
 int main() {
-    DescriptorManager d("Expriment.config");
-    d.calculateDescriptors("all_images.txt");
-    d.saveDescriptors("wheretobuydesc.bin");
+    DescriptorManager d("Experimentfc7.config");
+    d.calculateDescriptors("images_ids.txt");
+    d.saveDescriptors("wheretobuydescfc7.bin");
     return 0;
 }
