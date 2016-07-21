@@ -10,6 +10,7 @@ void calculateDescriptors(std::string configFile, std::string imageIdFiles, std:
     d.saveDescriptors(finalBinaryFile);
 }
 
+
 int main(int argc, char* argv[]) {
     std::vector<std::string> args;
     for(int i=1; i<argc; i++)

@@ -10,6 +10,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <jmsr/preprocessing.h>
 
 static void handle_error(const char* msg){
     perror(msg);
@@ -92,10 +93,11 @@ void DescriptorManager::calculateDescriptors(const std::string &image_filename) 
     for(map_iter iter = image_map.begin(); iter != image_map.end(); ++iter){
 	std::string image = iter->second;
         try{
-		std::cout<<image<<std::endl;
-		float *desc = this->predictor.getCaffeDescriptor(image, &desc_size, desc_layer_name);
+		    std::cout<<image<<std::endl;
+		    float *desc = this->predictor.getCaffeDescriptor(image, &desc_size, desc_layer_name);
+            Preprocessing::normalizeVector(desc, desc_size, jmsr::ROOT_UNIT);
         	//To avoid memory leaks
-		std::cout<<"CALCULATED DESCRIPTOR FOR: "<<image<<std::endl;
+		    std::cout<<"CALCULATED DESCRIPTOR FOR: "<<image<<std::endl;
         	if(descriptor_map.find(iter->first)!=descriptor_map.end())
             		delete descriptor_map[iter->first];
 
