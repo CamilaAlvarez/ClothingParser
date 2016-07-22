@@ -3,65 +3,12 @@
 //
 
 #include "DescriptorManager.hpp"
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <jmsr/preprocessing.h>
-
-static void handle_error(const char* msg){
-    perror(msg);
-    exit(255);
-}
-
-static const char* map_file(const char* filename, size_t& size){   
- int fd = open(filename, O_RDONLY);
-    if(fd == -1)
-        handle_error("open");
-
-    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-
-    struct stat sb;
-    if(fstat(fd, &sb) == -1)
-        handle_error("fstat");
-
-    size = sb.st_size;
-    const char* addr = static_cast<const char *>(mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0u));
-    if(addr == MAP_FAILED)
-        handle_error("mmap");
-    close(fd);
-    return addr;
-}
-
-static std::map<std::string, std::string> loadFileToMap(const char *image_filename){
-    size_t file_size;
-    const char *file = map_file(image_filename, file_size);
-    const char *end_file = file+file_size;
-    char line[1000];
-    int count = 0;
-
-    std::map<std::string, std::string> image_map;
-    while(file && file!=end_file){
-        if(*file == '\n' || file+1==end_file){
-            line[count] = '\0';
-            std::string file_line = line;
-            unsigned long tab_location = file_line.find('\t');
-            std::string id = file_line.substr(0,tab_location);
-            std::string image = file_line.substr(tab_location+1);
-            image_map[id] = image;
-	    count=0;
-        }
-        else{
-            line[count++] = *file;
-        }
-        file++;
-    }
-
-    return image_map;
-}
+#include "utils.hpp"
 
 
 DescriptorManager::DescriptorManager(const std::string &config_file):network_config_file(ConfigFile(config_file, '\t')), predictor()
@@ -121,7 +68,6 @@ void DescriptorManager::saveDescriptors(const std::string &output) {
             values.push_back(iter->second[i]);
     }
     std::ofstream output_file(output);
-    output_file.write(reinterpret_cast<char *>(values.size()), sizeof(float));
     output_file.write(reinterpret_cast<char *>(&values[0]), values.size()* sizeof(float));
     output_file.close();
 
