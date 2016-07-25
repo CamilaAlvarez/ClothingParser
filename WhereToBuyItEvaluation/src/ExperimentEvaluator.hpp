@@ -45,29 +45,6 @@ public:
     ExperimentEvaluator(const std::string &descriptorFile, const std::string &retrievalCodes,
                         const std::string &testingCodes, const std::string &classesFile);
     void runExperiments(const std::string &outputFile, const std::string &firstRetrievedFile);
+    ~ExperimentEvaluator();
 };
-
-//std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){
-//    std::string s = "";
-//    for(std::vector<float>::const_iterator it = array.begin(); it!=array.end(); ++it){
-//        std::string aux = "\t"+std::to_string(*it);
-//        s += aux;
-//    }
-//    os<<s<<std::endl;
-//    return os;
-//}
-//std::ostream& operator<<(std::ostream& os, const std::vector<PairIdVector>& array){
-//    std::string s = "";
-//    for(std::vector<PairIdVector>::const_iterator it = array.begin(); it!=array.end(); ++it){
-//        os<<*it;
-//    }
-//    return os;
-//}
-
-//std::ostream& operator<<(std::ostream& os, const PairIdVector& pair){
-//    std::string result = pair.id;
-//    os<<result;
-//    os<<pair.values<<std::endl;
-//    return os;
-//}
 #endif //WHERETOBUYITEVALUATION_EXPERIMENTEVALUATOR_HPP

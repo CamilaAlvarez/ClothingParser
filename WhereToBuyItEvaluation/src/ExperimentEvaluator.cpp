@@ -78,7 +78,7 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
 	omp_lock_t lock;
 	omp_init_lock(&lock);
      #endif   
- 
+    int count = 0; 
     #pragma omp parallel for
     for(int i = 0; i < testKeys.size(); i++){  
 	std::string key = testKeys[i];
@@ -86,7 +86,7 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
 	#ifdef _OPENMP
 	    omp_set_lock(&lock);
 	#endif
-	std::cout<<"BEGAN SEARCH FOR: "<<key<<std::endl;
+	std::cout<<"BEGAN SEARCH NUMBER "<<++count<<" FOR: "<<key<<std::endl;
         #ifdef _OPENMP
 	    omp_unset_lock(&lock);
 	#endif
@@ -211,6 +211,15 @@ void ExperimentEvaluator<Distance>::writeResultsToFile(const std::map<std::strin
         writeToFile(classResultsString, filename.c_str(), (int)finalString.size());
     }
 
+}
+
+template <class Distance>
+ExperimentEvaluator<Distance>::~ExperimentEvaluator(){
+    for(map_iter it = testDesc.begin(); it!=testDesc.end(); ++it)
+	delete it->second;
+    
+    for(map_iter it = testDesc.begin(); it!=testDesc.end(); ++it)
+	delete it->second;	
 }
 
 template class ExperimentEvaluator<JL2>;
