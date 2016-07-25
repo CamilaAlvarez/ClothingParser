@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
         args.push_back(argv[i]);
 
     if(std::find(args.begin(), args.end(),"-calculate_descriptors" ) != args.end())
-        calculateDescriptors("Experimentfc7.config", "images_ids.txt","wheretobuydescfc7.bin");
+        calculateDescriptors("Experimentfc6.config", "images_ids.txt","wheretobuydescfc6.bin");
 
 
     return 0;
