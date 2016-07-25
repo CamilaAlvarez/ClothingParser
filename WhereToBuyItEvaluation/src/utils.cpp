@@ -8,12 +8,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-static void handle_error(const char* msg){
+void handle_error(const char* msg){
     perror(msg);
     exit(255);
 }
 
-static const char* map_file(const char* filename, size_t& size){
+const char* map_file(const char* filename, size_t& size){
     int fd = open(filename, O_RDONLY);
     if(fd == -1)
         handle_error("open");
@@ -44,8 +44,11 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
         if(*file == '\n' || file+1==end_file){
             line[count] = '\0';
             std::string file_line = line;
-            if(file_line.compare("")!=0)
-                continue;
+            if(file_line.compare("")==0){
+            	file++;
+		count=0;
+		continue;
+	    }
             unsigned long tab_location = file_line.find('\t');
             std::string id = file_line.substr(0,tab_location);
             std::string image = file_line.substr(tab_location+1);

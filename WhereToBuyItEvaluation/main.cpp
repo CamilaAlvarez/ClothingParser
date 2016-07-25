@@ -1,5 +1,6 @@
 #include <iostream>
 #include <DescriptorManager.hpp>
+#include "jmsr/JDistance.h"
 #include "ExperimentEvaluator.hpp"
 #include <algorithm>
 
@@ -14,8 +15,8 @@ void calculateDescriptors(std::string configFile, std::string imageIdFiles, std:
 void runExperiments(const std::string &descriptorFile, const std::string &retrievalCodes,
                     const std::string &testingCodes, const std::string &classesFile, const std::string &output,
                     const std::string &firstRetrievedFile){
-    ExperimentEvaluator exp(descriptorFile, retrievalCodes, testingCodes, classesFile);
-    exp.runExperiments(output, firstRetrievedFile);
+    ExperimentEvaluator<JL2> experiment(descriptorFile, retrievalCodes, testingCodes, classesFile);
+    experiment.runExperiments(output, firstRetrievedFile);
 }
 
 int main(int argc, char* argv[]) {
@@ -23,11 +24,11 @@ int main(int argc, char* argv[]) {
     for(int i=1; i<argc; i++)
         args.push_back(argv[i]);
 
-    std::string descFile = "wheretobuydescfc7.bin";
+    std::string descFile = "descriptors/wheretobuydescfc7.bin";
     if(std::find(args.begin(), args.end(),"-calculate_descriptors" ) != args.end())
-        calculateDescriptors("Experimentfc7.config", "images_ids.txt", descFile);
+        calculateDescriptors("configFiles/Experimentfc7.config", "neededFiles/images_ids.txt", descFile);
 
     if(std::find(args.begin(), args.end(), "-run_experiment") != args.end())
-        runExperiments(descFile, "retrieval.txt", "testing.txt", "classes.txt", "experiment", "firstRetrieved");
+        runExperiments(descFile, "neededFiles/retrieval.txt", "neededFiles/testing.txt", "neededFiles/classes.txt", "experiment", "results/firstRetrieved.txt");
     return 0;
 }

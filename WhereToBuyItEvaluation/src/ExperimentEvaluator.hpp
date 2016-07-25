@@ -18,6 +18,7 @@ public:
     std::string getId(){return id; };
     std::vector<float> getValues(){ return values; };
     friend std::ostream& operator<<(std::ostream& os, const PairIdVector& pair);
+    std::vector<float> getValues() const { return values; };
 
 };
 
@@ -32,7 +33,7 @@ private:
     std::map<std::string, int> classMap;
     int descSize;
     std::vector<search2::ResultPair> search(const float* query, int K = -1);
-    std::map<std::string, std::vector<PairIdVector>> calculateMeasument(const std::map<std::string,
+    std::map<std::string, std::vector<PairIdVector>> calculateMeasurement(const std::map<std::string,
             std::vector<search2::ResultPair>>& results, std::function<float (int relevantItems, int retrieved,
                                                                              int totalRelevant)> measurement);
     std::map<std::string, std::vector<float>> calculateAverageMeasurements(const std::map<std::string,
@@ -45,20 +46,27 @@ public:
     void runExperiments(const std::string &outputFile, const std::string &firstRetrievedFile);
 };
 
-std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){
-    std::string s = "";
-    for(std::vector<float>::const_iterator it = array.begin(); it!=array.end(); ++it){
-        std::string aux = "\t"+std::to_string(*it);
-        s += aux;
-    }
-    os<<s<<std::endl;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const std::vector<PairIdVector>& array){
-    std::string s = "";
-    for(std::vector<PairIdVector>::const_iterator it = array.begin(); it!=array.end(); ++it){
-        os<<*it;
-    }
-    return os;
-}
+//std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){
+//    std::string s = "";
+//    for(std::vector<float>::const_iterator it = array.begin(); it!=array.end(); ++it){
+//        std::string aux = "\t"+std::to_string(*it);
+//        s += aux;
+//    }
+//    os<<s<<std::endl;
+//    return os;
+//}
+//std::ostream& operator<<(std::ostream& os, const std::vector<PairIdVector>& array){
+//    std::string s = "";
+//    for(std::vector<PairIdVector>::const_iterator it = array.begin(); it!=array.end(); ++it){
+//        os<<*it;
+//    }
+//    return os;
+//}
+
+//std::ostream& operator<<(std::ostream& os, const PairIdVector& pair){
+//    std::string result = pair.id;
+//    os<<result;
+//    os<<pair.values<<std::endl;
+//    return os;
+//}
 #endif //WHERETOBUYITEVALUATION_EXPERIMENTEVALUATOR_HPP
