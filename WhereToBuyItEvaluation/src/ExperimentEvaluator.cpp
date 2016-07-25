@@ -45,7 +45,7 @@ ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptor
     std::cout<<"READING TESTING ITEMS"<<std::endl;
     std::map<std::string, std::string> testingClasses = loadFileToMap(testingCodes.c_str());
     std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
-    std::ifstream descriptors(descriptorFile);
+    /*std::ifstream descriptors(descriptorFile);
     if(descriptors){
         descriptors.seekg (0, descriptors.end);
         long long length = descriptors.tellg();
@@ -57,13 +57,14 @@ ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptor
         descriptors.read(reinterpret_cast<char *>(&descriptorsVector[0]),length);
         descriptors.close();
 	
-	
+	*/
+        std::vector<float> descriptorsVector = loadFileToFloatVector(descriptorFile.c_str());
         std::cout<<"LOADING DESCRIPTORS INTO MAP"<<std::endl;
         descSize = (int)descriptorsVector[0];
-	std::cout<<"DESCRIPTOR SIZE: "<<descSize<<std::endl;
+	    std::cout<<"DESCRIPTOR SIZE: "<<descSize<<std::endl;
         long long i = 1;
-	int count = 0;
-        while(i < length){
+	    int count = 0;
+        while(i < descriptorsVector.size()){
 	    if(count%100==0)
 		std::cout<<"Processed: "<<count<<std::endl;
             float *desc = new float[descSize];

@@ -13,7 +13,8 @@ void handle_error(const char* msg){
     exit(255);
 }
 
-const char* map_file(const char* filename, size_t& size){
+template <typename T>
+T map_file(const char* filename, size_t& size){
     int fd = open(filename, O_RDONLY);
     if(fd == -1)
         handle_error("open");
@@ -25,7 +26,7 @@ const char* map_file(const char* filename, size_t& size){
         handle_error("fstat");
 
     size = sb.st_size;
-    const char* addr = static_cast<const char *>(mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0u));
+    T addr = static_cast<T>(mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0u));
     if(addr == MAP_FAILED)
         handle_error("mmap");
     close(fd);
@@ -34,7 +35,7 @@ const char* map_file(const char* filename, size_t& size){
 
 std::map<std::string, std::string> loadFileToMap(const char *image_filename){
     size_t file_size;
-    const char *file = map_file(image_filename, file_size);
+    const char *file = map_file<const char*>(image_filename, file_size);
     const char *end_file = file+file_size;
     char line[1000];
     int count = 0;
@@ -62,6 +63,22 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
     }
 
     return image_map;
+}
+
+std::vector<float> loadFileToFloatVector(const char *filename){
+    size_t file_size;
+    const float *file = map_file<const float*>(filename, file_size);
+    const float *end_file = file+file_size;
+    char line[1000];
+    int count = 0;
+
+    std::vector<float> floatVector;
+    while(file && file!=end_file){
+        floatVector.push_back(*file);
+        file++;
+    }
+
+    return floatVector;
 }
 
 void writeToFile(const char *string, const char* filename, int filesize){

@@ -7,10 +7,12 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 
 void handle_error(const char* msg);
-const char* map_file(const char* filename, size_t& size);
+template <typename T>
+T map_file(const char* filename, size_t& size);
 std::map<std::string, std::string> loadFileToMap(const char *image_filename);
 void writeToFile(const char *string, const char* filename, int filesize);
-
+std::vector<float> loadFileToFloatVector(const char *filename);
 #endif //WHERETOBUYITEVALUATION_UTILS_HPP
