@@ -27,6 +27,7 @@ public:
 template <class Distance>
 class ExperimentEvaluator {
 private:
+    std::vector<std::string> testKeys;
     std::map<std::string, float*> testDesc;
     std::map<std::string, float*> retrievalMap;
     std::map<std::string, std::string> imageClassMap;

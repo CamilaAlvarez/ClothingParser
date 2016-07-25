@@ -7,6 +7,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <cstring>
 
 void handle_error(const char* msg){
     perror(msg);
@@ -65,20 +67,23 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
     return image_map;
 }
 
-std::vector<float> loadFileToFloatVector(const char *filename){
+std::map<std::string,float *> loadFileToFloatMap(const char *filename, int* descSize){
     size_t file_size;
     const float *file = map_file<const float*>(filename, file_size);
-    const float *end_file = file+file_size;
-    char line[1000];
-    int count = 0;
-
-    std::vector<float> floatVector;
+    const float *end_file = file+(file_size/sizeof(float));
+    *descSize = (int)*file;
+    file++;    
+    std::map<std::string, float*> floatMap;
     while(file && file!=end_file){
-        floatVector.push_back(*file);
-        file++;
+	float id = *file;
+	file++;
+	float *desc = new float[*descSize];
+	std::memcpy(desc, file, *descSize);
+        file+=*descSize;
+	floatMap[std::to_string((int)id)] = desc;
     }
 
-    return floatVector;
+    return floatMap;
 }
 
 void writeToFile(const char *string, const char* filename, int filesize){

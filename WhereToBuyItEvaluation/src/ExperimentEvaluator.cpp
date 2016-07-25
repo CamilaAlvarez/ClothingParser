@@ -1,7 +1,9 @@
 //
 // Created by Camila Alvarez on 21-07-16.
 //
-
+#ifdef _OPENMP
+    #include <omp.h>
+#endif
 #include "utils.hpp"
 #include "ExperimentEvaluator.hpp"
 #include <fstream>
@@ -45,63 +47,57 @@ ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptor
     std::cout<<"READING TESTING ITEMS"<<std::endl;
     std::map<std::string, std::string> testingClasses = loadFileToMap(testingCodes.c_str());
     std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
-    /*std::ifstream descriptors(descriptorFile);
-    if(descriptors){
-        descriptors.seekg (0, descriptors.end);
-        long long length = descriptors.tellg();
-        descriptors.seekg (0, descriptors.beg);
-	long long realLength = length/sizeof(float);
-        std::vector<float> descriptorsVector;
-        descriptorsVector.resize(realLength);
-	std::cout<<"READING DESCRIPTORS"<<std::endl;
-        descriptors.read(reinterpret_cast<char *>(&descriptorsVector[0]),length);
-        descriptors.close();
-	
-	*/
-        std::vector<float> descriptorsVector = loadFileToFloatVector(descriptorFile.c_str());
-        std::cout<<"LOADING DESCRIPTORS INTO MAP"<<std::endl;
-        descSize = (int)descriptorsVector[0];
-	    std::cout<<"DESCRIPTOR SIZE: "<<descSize<<std::endl;
-        long long i = 1;
-	    int count = 0;
-        while(i < descriptorsVector.size()){
+    
+    std::map<std::string,float*> descriptorsMap = loadFileToFloatMap(descriptorFile.c_str(), &descSize);
+    int count = 0;
+    for(std::map<std::string, float*>::iterator it = descriptorsMap.begin(); it!=descriptorsMap.end(); ++it){
 	    if(count%100==0)
 		std::cout<<"Processed: "<<count<<std::endl;
-            float *desc = new float[descSize];
-            float imageCode = descriptorsVector[i];
-	    for(int j = 0; j<descSize;j++)
-		desc[j] = descriptorsVector[j+i+1];
-            i += (descSize+1);
-            std::string imageCodeString = std::to_string(imageCode);
+            std::string imageCodeString = it->first;
             if(retrievalClasses.find(imageCodeString)!= retrievalClasses.end())
-                retrievalMap[imageCodeString] = desc;
-            else if (testingClasses.find(imageCodeString) != testingClasses.end())
-                testDesc[imageCodeString] = desc;
+                retrievalMap[imageCodeString] = it->second;
+            else if (testingClasses.find(imageCodeString) != testingClasses.end()){
+                testDesc[imageCodeString] = it->second;
+		testKeys.push_back(imageCodeString);
+	    }
 	    count++;
-        }
-	
-        std::cout<<"LOADED DESCRIPTORS"<<std::endl;
-        retrievalClasses.insert(testingClasses.begin(), testingClasses.end());
-        imageClassMap = retrievalClasses;
-    }
-    else{
-        throw std::runtime_error("Couldn't open file");
-    }
+    }	
+    std::cout<<"LOADED DESCRIPTORS"<<std::endl;
+    retrievalClasses.insert(testingClasses.begin(), testingClasses.end());
+    imageClassMap = retrievalClasses;
+    std::cout<<"FINISHED CREATING EXPERIMENT EVALUATOR"<<std::endl;
 
 }
 
 template <class Distance>
 void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile, const std::string& firstRerievedFile) {
+    std::cout<<"STARTING EXPERIMENT"<<std::endl;
     std::map<std::string, std::string> firstRetrieved;
-    const float* query;
     std::map<std::string, std::vector<search2::ResultPair>> mapResults;
-    for (map_iter it = testDesc.begin(); it!=testDesc.end(); ++it){
-        query = it->second;
-	std::cout<<"BEGAN SEARCH FOR: "<<query<<std::endl;
-        std::vector<search2::ResultPair> results = search(query);
-        firstRetrieved[it->first] = results[0].getId();
-        mapResults[it->first] = results;
+    #ifdef _OPENMP
+	omp_lock_t lock;
+	omp_init_lock(&lock);
+     #endif   
+ 
+    #pragma omp parallel for
+    for(int i = 0; i < testKeys.size(); i++){  
+	std::string key = testKeys[i];
+	float *query = testDesc[key];
+	#ifdef _OPENMP
+	    omp_set_lock(&lock);
+	#endif
+	std::cout<<"BEGAN SEARCH FOR: "<<key<<std::endl;
+        #ifdef _OPENMP
+	    omp_unset_lock(&lock);
+	#endif
+	std::vector<search2::ResultPair> results = search(query);
+        firstRetrieved[key] = results[0].getId();
+        mapResults[key] = results;
     }
+
+    #ifdef _OPENMP
+	omp_destroy_lock(&lock);
+    #endif
     std::map<std::string, std::vector<PairIdVector>> presicionPerClass = calculateMeasurement(mapResults,
                                                                                             [](int relevantItems, int retrieved, int totalRelevant){
                                                                                                 return ((float)relevantItems)/((float) retrieved);

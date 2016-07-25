@@ -14,5 +14,5 @@ template <typename T>
 T map_file(const char* filename, size_t& size);
 std::map<std::string, std::string> loadFileToMap(const char *image_filename);
 void writeToFile(const char *string, const char* filename, int filesize);
-std::vector<float> loadFileToFloatVector(const char *filename);
+std::map<std::string,float*> loadFileToFloatMap(const char *filename, int *descSize);
 #endif //WHERETOBUYITEVALUATION_UTILS_HPP
