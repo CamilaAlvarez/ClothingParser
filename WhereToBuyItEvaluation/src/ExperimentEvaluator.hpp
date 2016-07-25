@@ -42,7 +42,7 @@ private:
 public:
     ExperimentEvaluator(const std::string &descriptorFile, const std::string &retrievalCodes,
                         const std::string &testingCodes, const std::string &classesFile);
-    void runExperiments(const std::string &outputFile);
+    void runExperiments(const std::string &outputFile, const std::string &firstRetrievedFile);
 };
 
 std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){

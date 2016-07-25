@@ -12,9 +12,10 @@ void calculateDescriptors(std::string configFile, std::string imageIdFiles, std:
 }
 
 void runExperiments(const std::string &descriptorFile, const std::string &retrievalCodes,
-                    const std::string &testingCodes, const std::string &classesFile, const std::string &output){
+                    const std::string &testingCodes, const std::string &classesFile, const std::string &output,
+                    const std::string &firstRetrievedFile){
     ExperimentEvaluator exp(descriptorFile, retrievalCodes, testingCodes, classesFile);
-    exp.runExperiments(output);
+    exp.runExperiments(output, firstRetrievedFile);
 }
 
 int main(int argc, char* argv[]) {
@@ -27,6 +28,6 @@ int main(int argc, char* argv[]) {
         calculateDescriptors("Experimentfc7.config", "images_ids.txt", descFile);
 
     if(std::find(args.begin(), args.end(), "-run_experiment") != args.end())
-        runExperiments(descFile, "retrieval.txt", "testing.txt", "classes.txt", "experiment");
+        runExperiments(descFile, "retrieval.txt", "testing.txt", "classes.txt", "experiment", "firstRetrieved");
     return 0;
 }

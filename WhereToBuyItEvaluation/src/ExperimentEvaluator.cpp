@@ -2,8 +2,9 @@
 // Created by Camila Alvarez on 21-07-16.
 //
 
-#include "ExperimentEvaluator.hpp"
 #include "utils.hpp"
+#include "ExperimentEvaluator.hpp"
+
 
 
 typedef std::map<std::string, float *>::iterator map_iter;
@@ -65,13 +66,14 @@ ExperimentEvaluator::ExperimentEvaluator(const std::string &descriptorFile, cons
 }
 
 template <class Distance>
-void ExperimentEvaluator::runExperiments(const std::string &outputFile) {
-
+void ExperimentEvaluator::runExperiments(const std::string &outputFile, const std::string& firstRerievedFile) {
+    std::map<std::string, std::string> firstRetrieved;
     const float* query;
     std::map<std::string, std::vector<search2::ResultPair>> mapResults;
     for (map_iter it = testDesc.begin(); it!=testDesc.end(); ++it){
         query = it->second;
         std::vector<search2::ResultPair> results = search(query);
+        firstRetrieved[it->first] = results[0].getId();
         mapResults[it->first] = results;
     }
     std::map<std::string, std::vector<PairIdVector>> presicionPerClass = calculateMeasument(mapResults,
@@ -86,6 +88,12 @@ void ExperimentEvaluator::runExperiments(const std::string &outputFile) {
     std::map<std::string, std::vector<float>> averageRecallClass = calculateAverageMeasurements(recallPerClass);
     writeResultsToFile(presicionPerClass, averagePrecisionClass, outputFile, "precision");
     writeResultsToFile(recallPerClass, averageRecallClass, outputFile, "recall");
+
+    std::ofstream firstRetrievedItem(firstRerievedFile);
+    for(std::map<std::string, std::string>::iterator it=firstRetrieved.begin(); it!=firstRetrieved.end(); ++it){
+        firstRetrievedItem<<it->first<<"\t"<<it->second<<std::endl;
+    }
+    firstRetrievedItem.close();
 }
 
 template<class Distance>
