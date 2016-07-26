@@ -86,33 +86,45 @@ ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::map<std::string, f
 template <class Distance>
 void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile, const std::string& firstRerievedFile) {
     std::cout<<"STARTING EXPERIMENT"<<std::endl;
-    std::map<std::string, std::string> firstRetrieved;
-    std::map<std::string, std::vector<search2::ResultPair>> mapResults;
+    //std::map<std::string, std::string> firstRetrieved;
+    std::map<std::string, std::vector<float>> precisionRecall;
     #ifdef _OPENMP
 	omp_lock_t lock;
 	omp_init_lock(&lock);
      #endif   
     int count = 0; 
     #pragma omp parallel for
-    for(int i = 0; i < testKeys.size(); i++){  
-	std::string key = testKeys[i];
-	float *query = testDesc[key];
-	#ifdef _OPENMP
-	    omp_set_lock(&lock);
-	#endif
-	std::cout<<"BEGAN SEARCH NUMBER "<<++count<<" FOR: "<<key<<std::endl;
+    for(int i = 0; i < testKeys.size(); i++){
+        std::vector<search2::ResultPair> results;
+	    std::string key = testKeys[i];
+	    float *query = testDesc[key];
+	    #ifdef _OPENMP
+	        omp_set_lock(&lock);
+	    #endif
+	    std::cout<<"BEGAN SEARCH NUMBER "<<++count<<" FOR: "<<key<<std::endl;
         #ifdef _OPENMP
-	    omp_unset_lock(&lock);
-	#endif
-	std::vector<search2::ResultPair> results = search(query);
-        firstRetrieved[key] = results[0].getId();
-        mapResults[key] = results;
+            omp_unset_lock(&lock);
+	    #endif
+	    results = search(query);
+        std::stringstream resultString;
+        for(int j = 0; j<results.size(); j++){
+            std::string id = results[j].getId();
+            resultString<<j+1<<"\t"<<id<<"\t"<<imageClassMap[id]<<std::endl;
+        }
+        std::string finalString = resultString.str();
+        std::string filename = "results/"+imageClassMap[key]+"/"+key+".txt";
+        writeToFile(finalString.c_str(), filename.c_str(), (int)finalString.size());
+        precisionRecall[key] = calculatePrecisionRecall(key, results);
+        //firstRetrieved[key] = results[0].getId();
+        //mapResults[key] = results;
     }
 
     #ifdef _OPENMP
 	omp_destroy_lock(&lock);
     #endif
-    std::map<std::string, std::vector<PairIdVector>> presicionPerClass = calculateMeasurement(mapResults,
+
+    
+    /*std::map<std::string, std::vector<PairIdVector>> presicionPerClass = calculateMeasurement(mapResults,
                                                                                             [](int relevantItems, int retrieved, int totalRelevant){
                                                                                                 return ((float)relevantItems)/((float) retrieved);
                                                                                             });
@@ -129,7 +141,7 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
     for(std::map<std::string, std::string>::iterator it=firstRetrieved.begin(); it!=firstRetrieved.end(); ++it){
         firstRetrievedItem<<it->first<<"\t"<<it->second<<std::endl;
     }
-    firstRetrievedItem.close();
+    firstRetrievedItem.close();*/
 }
 
 template<class Distance>
@@ -144,40 +156,57 @@ std::vector<search2::ResultPair> ExperimentEvaluator<Distance>::search(const flo
     std::sort(results.begin(), results.end(), search2::ResultPair::comp_pair_asc);
     if(K != -1 && K < results.size())
         results.resize(K);
-    //No deberia guardar todos los resultados->Se cae por memoria
+
     return results;
 }
 
 template <class Distance>
-std::map<std::string, std::vector<PairIdVector>> ExperimentEvaluator<Distance>::calculateMeasurement(const std::map<std::string,
-        std::vector<search2::ResultPair>>& distances, std::function<float (int relevantItems, int retrieved,
-                                                                           int totalRelevant)> measurement){
-    typedef std::map<std::string, std::vector<search2::ResultPair>>::const_iterator iter;
-    std::map<std::string, std::vector<PairIdVector>> results;
+std::vector<float> ExperimentEvaluator<Distance>::calculatePrecisionRecall(const std::string &idQuery,
+        const std::vector<search2::ResultPair>& distances){
+    typedef std::vector<search2::ResultPair>::const_iterator iter;
 
-    for(std::map<std::string, int>::iterator it = classMap.begin(); it!=classMap.end(); ++it){
-        results[it->first] = std::vector<PairIdVector>();
-    }
-
+    std::vector<float> precision;
+    std::vector<float> recall;
+    int retrieved = 0;
+    int relevant = 0;
+    std::string itemClass = imageClassMap[idQuery];
     for(iter it = distances.begin(); it!=distances.end(); ++it){
-        int retrieved = 0;
-        int relevant = 0;
-        std::vector<float> measures;
-        std::string itemClass = imageClassMap[it->first];
-        std::vector<search2::ResultPair> values = it->second;
-        for(std::vector<search2::ResultPair>::const_iterator itert = values.begin(); itert!=values.end(); ++itert){
-            std::string retrievedClass = imageClassMap[(*itert).getId()];
-            if(itemClass.compare(retrievedClass)==0)
+        std::string retrievedClass = imageClassMap[(*it).getId()];
+        if(itemClass.compare(retrievedClass)==0)
                 relevant++;
             retrieved++;
-            float measure = measurement(relevant, retrieved, classMap[itemClass]);
-            measures.push_back(measure);
-        }
-        PairIdVector pair(it->first, measures);
-        results[itemClass].push_back(pair);
+        float prec = ((float)relevant)/((float) retrieved);
+        float  rec = ((float) relevant/ (float) classMap[itemClass]);
+
+        precision.push_back(prec);
+        recall.push_back(rec);
     }
 
-    return results;
+    float expectedRecall = 0.1;
+    std::vector<float> recalls;
+    for(int i = 0; i<10; i++){
+        recalls.push_back(expectedRecall);
+        expectedRecall+=0.1;
+    }
+    std::vector<float> precisionRecall;
+    int i = 0;
+    float maxPres = 0;
+    float currentRecall =  recall[i];
+
+    while(currentRecall < 0.1){
+        currentRecall = recall[++i];
+        maxPres = std::max(maxPres, precision[i]);
+    }
+    precisionRecall.push_back(maxPres);
+    i = 0;
+    for(std::vector<float>::iterator it=recalls.begin();it!=recalls.end();++it){
+        while(currentRecall < *it){
+            currentRecall = recall[++i];
+        }
+        precisionRecall.push_back(precision[i]);
+    }
+
+    return precisionRecall;
 
 }
 

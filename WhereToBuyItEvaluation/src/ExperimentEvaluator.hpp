@@ -34,9 +34,8 @@ private:
     std::map<std::string, int> classMap;
     int descSize;
     std::vector<search2::ResultPair> search(const float* query, int K = -1);
-    std::map<std::string, std::vector<PairIdVector>> calculateMeasurement(const std::map<std::string,
-            std::vector<search2::ResultPair>>& results, std::function<float (int relevantItems, int retrieved,
-                                                                             int totalRelevant)> measurement);
+    std::vector<float> calculatePrecisionRecall(const std::string &idQuery,
+            const std::vector<search2::ResultPair>& results);
     std::map<std::string, std::vector<float>> calculateAverageMeasurements(const std::map<std::string,
             std::vector<PairIdVector>> &measurements);
     void writeResultsToFile(const std::map<std::string, std::vector<PairIdVector>>& individualResults,
