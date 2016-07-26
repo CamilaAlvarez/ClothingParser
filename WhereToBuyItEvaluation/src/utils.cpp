@@ -38,6 +38,7 @@ T map_file(const char* filename, size_t& size){
 std::map<std::string, std::string> loadFileToMap(const char *image_filename){
     size_t file_size;
     const char *file = map_file<const char*>(image_filename, file_size);
+    const char* aux = file;
     const char *end_file = file+file_size;
     char line[1000];
     int count = 0;
@@ -64,7 +65,7 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
         file++;
     }
 
-    if (munmap(static_cast<void *>(file), file_size) == -1) {
+    if (munmap(const_cast<char *>(aux), file_size) == -1) {
         perror("Error un-mmapping the file");
         exit(-1);
     }
@@ -75,6 +76,7 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
 std::map<std::string,float *> loadFileToFloatMap(const char *filename, int* descSize){
     size_t file_size;
     const float *file = map_file<const float*>(filename, file_size);
+    const float* aux = file;
     const float *end_file = file+(file_size/sizeof(float));
     *descSize = (int)*file;
     file++;    
@@ -88,7 +90,7 @@ std::map<std::string,float *> loadFileToFloatMap(const char *filename, int* desc
 	floatMap[std::to_string((int)id)] = desc;
     }
 
-    if (munmap(static_cast<void *>(file), file_size) == -1) {
+    if (munmap(const_cast<float *>(aux), file_size) == -1) {
         perror("Error un-mmapping the file");
         exit(-2);
     }

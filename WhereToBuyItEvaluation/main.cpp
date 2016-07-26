@@ -11,7 +11,7 @@ void calculateDescriptors(DescriptorManager& manager, std::string imageIdFiles, 
     manager.saveDescriptors(finalBinaryFile);
 }
 
-void runExperiments(ExperimentEvaluator& experiment, const std::string &output,
+void runExperiments(ExperimentEvaluator<JL2>& experiment, const std::string &output,
                     const std::string &firstRetrievedFile){
     experiment.runExperiments(output, firstRetrievedFile);
 }
