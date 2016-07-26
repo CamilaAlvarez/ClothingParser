@@ -64,6 +64,11 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
         file++;
     }
 
+    if (munmap(static_cast<void *>(file), file_size) == -1) {
+        perror("Error un-mmapping the file");
+        exit(-1);
+    }
+
     return image_map;
 }
 
@@ -81,6 +86,11 @@ std::map<std::string,float *> loadFileToFloatMap(const char *filename, int* desc
 	std::memcpy(desc, file, *descSize);
         file+=*descSize;
 	floatMap[std::to_string((int)id)] = desc;
+    }
+
+    if (munmap(static_cast<void *>(file), file_size) == -1) {
+        perror("Error un-mmapping the file");
+        exit(-2);
     }
 
     return floatMap;
@@ -149,6 +159,7 @@ void writeToFile(const char *string, const char* filename, int filesize){
      */
     if (munmap(map, filesize) == -1) {
         perror("Error un-mmapping the file");
+        close(fd);
         /* Decide here whether to close(fd) and exit() or not. Depends... */
     }
 

@@ -41,8 +41,12 @@ private:
             std::vector<PairIdVector>> &measurements);
     void writeResultsToFile(const std::map<std::string, std::vector<PairIdVector>>& individualResults,
                             const std::map<std::string, std::vector<float>>& averages, const std::string &output, const std::string &type);
+    void load(const std::map<std::string, float*> &descriptors, const std::string &retrievalCodes,
+              const std::string &testingCodes, const std::string &classesFile);
 public:
     ExperimentEvaluator(const std::string &descriptorFile, const std::string &retrievalCodes,
+                        const std::string &testingCodes, const std::string &classesFile);
+    ExperimentEvaluator(const std::map<std::string, float*> &descriptors, const std::string &retrievalCodes,
                         const std::string &testingCodes, const std::string &classesFile);
     void runExperiments(const std::string &outputFile, const std::string &firstRetrievedFile);
     ~ExperimentEvaluator();

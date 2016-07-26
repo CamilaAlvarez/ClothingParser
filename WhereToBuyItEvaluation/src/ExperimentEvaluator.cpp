@@ -33,8 +33,8 @@ PairIdVector::PairIdVector(std::string id, std::vector<float> values): id(id), v
 }
 
 template <class Distance>
-ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptorFile, const std::string &retrievalCodes,
-                                         const std::string &testingCodes, const std::string &classesFile) {
+void ExperimentEvaluator<Distance>::load(const std::map<std::string, float*> &descriptorsMap, const std::string &retrievalCodes,
+                                         const std::string &testingCodes, const std::string &classesFile){
     std::cout<<"READING CLASSES"<<std::endl;
     std::map<std::string, std::string> classes = loadFileToMap(classesFile.c_str());
     std::cout<<"READ CLASSES"<<std::endl;
@@ -46,29 +46,43 @@ ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptor
     std::map<std::string, std::string> retrievalClasses = loadFileToMap(retrievalCodes.c_str());
     std::cout<<"READING TESTING ITEMS"<<std::endl;
     std::map<std::string, std::string> testingClasses = loadFileToMap(testingCodes.c_str());
-    std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
-    
-    std::map<std::string,float*> descriptorsMap = loadFileToFloatMap(descriptorFile.c_str(), &descSize);
+
     int count = 0;
-    for(std::map<std::string, float*>::iterator it = descriptorsMap.begin(); it!=descriptorsMap.end(); ++it){
-	    if(count%100==0)
-		std::cout<<"Processed: "<<count<<std::endl;
-            std::string imageCodeString = it->first;
-            if(retrievalClasses.find(imageCodeString)!= retrievalClasses.end())
-                retrievalMap[imageCodeString] = it->second;
-            else if (testingClasses.find(imageCodeString) != testingClasses.end()){
-                testDesc[imageCodeString] = it->second;
-		testKeys.push_back(imageCodeString);
-	    }
-	    count++;
-    }	
+    for(std::map<std::string, float*>::const_iterator it = descriptorsMap.begin(); it!=descriptorsMap.end(); ++it){
+        if(count%100==0)
+            std::cout<<"Processed: "<<count<<std::endl;
+        std::string imageCodeString = it->first;
+        if(retrievalClasses.find(imageCodeString)!= retrievalClasses.end())
+            retrievalMap[imageCodeString] = it->second;
+        else if (testingClasses.find(imageCodeString) != testingClasses.end()){
+            testDesc[imageCodeString] = it->second;
+            testKeys.push_back(imageCodeString);
+        }
+        count++;
+    }
     std::cout<<"LOADED DESCRIPTORS"<<std::endl;
+    //Mover imageClassMap
     retrievalClasses.insert(testingClasses.begin(), testingClasses.end());
     imageClassMap = retrievalClasses;
     std::cout<<"FINISHED CREATING EXPERIMENT EVALUATOR"<<std::endl;
-
 }
 
+template <class Distance>
+ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptorFile, const std::string &retrievalCodes,
+                                         const std::string &testingCodes, const std::string &classesFile) {
+    std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
+    std::map<std::string,float*> descriptorsMap = loadFileToFloatMap(descriptorFile.c_str(), &descSize);
+    load(descriptorsMap, retrievalCodes, testingCodes, classesFile);
+}
+
+template <class Distance>
+ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::map<std::string, float*> &descriptorsMap, const std::string &retrievalCodes,
+                                                   const std::string &testingCodes, const std::string &classesFile) {
+    load(descriptorsMap, retrievalCodes, testingCodes, classesFile);
+}
+
+
+//Guardar menos cosas al principio. Me estoy comiendo la memoria!!
 template <class Distance>
 void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile, const std::string& firstRerievedFile) {
     std::cout<<"STARTING EXPERIMENT"<<std::endl;
@@ -130,6 +144,7 @@ std::vector<search2::ResultPair> ExperimentEvaluator<Distance>::search(const flo
     std::sort(results.begin(), results.end(), search2::ResultPair::comp_pair_asc);
     if(K != -1 && K < results.size())
         results.resize(K);
+    //No deberia guardar todos los resultados->Se cae por memoria
     return results;
 }
 
