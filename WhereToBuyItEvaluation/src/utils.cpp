@@ -153,7 +153,7 @@ void writeToFile(const char *string, const char* filename, int filesize){
 
     /* Now write int's to the file as if it were memory (an array of ints).
      */
-    for (i = 1; i <=filesize; ++i) {
+    for (i = 0; i <filesize; ++i) {
         map[i] = string[i];
     }
 

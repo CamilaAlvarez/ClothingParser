@@ -17,6 +17,7 @@ public:
     void calculateDescriptors(const std::string &image_filename);
     void saveDescriptors(const std::string &output);
     std::map<std::string, float *> getDescriptorMap(){ return descriptor_map; };
+    void destroyDescriptors();
     ~DescriptorManager();
 
 private:

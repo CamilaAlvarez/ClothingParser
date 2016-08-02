@@ -88,6 +88,7 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
     std::cout<<"STARTING EXPERIMENT"<<std::endl;
     //std::map<std::string, std::string> firstRetrieved;
     std::map<std::string, std::vector<float>> precisionRecall;
+    float totalAverage = 0;
     #ifdef _OPENMP
 	omp_lock_t lock;
 	omp_init_lock(&lock);
@@ -113,35 +114,29 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
         }
         std::string finalString = resultString.str();
         std::string filename = "results/"+imageClassMap[key]+"/"+key+".txt";
-        writeToFile(finalString.c_str(), filename.c_str(), (int)finalString.size());
-        precisionRecall[key] = calculatePrecisionRecall(key, results);
+        writeToFile(finalString.c_str(), filename.c_str(), (int)finalString.size()+1);
+	float average;
+        precisionRecall[key] = calculatePrecisionRecall(key, results, &average);
+	totalAverage += average;
         //firstRetrieved[key] = results[0].getId();
         //mapResults[key] = results;
     }
+	
+    totalAverage = totalAverage/(float)testKeys.size();
+    std::stringstream ss;
+    for(std::map<std::string, std::vector<float>>::iterator it=precisionRecall.begin(); it!=precisionRecall.end(); ++it){
+	ss<<it->first<<it->second<<std::endl;	
+    }
+    ss<<"MAP :"<<totalAverage<<std::endl;
+    std::string s = ss.str();
+    std::string f = "results/precisionRecallPerQuery.txt";
+    writeToFile(s.c_str(), f.c_str(), (int)s.size()+1); 
 
     #ifdef _OPENMP
 	omp_destroy_lock(&lock);
     #endif
-
     
-    /*std::map<std::string, std::vector<PairIdVector>> presicionPerClass = calculateMeasurement(mapResults,
-                                                                                            [](int relevantItems, int retrieved, int totalRelevant){
-                                                                                                return ((float)relevantItems)/((float) retrieved);
-                                                                                            });
-    std::map<std::string, std::vector<PairIdVector>> recallPerClass = calculateMeasurement(mapResults,
-                                                                                            [](int relevantItems, int retrieved, int totalRelevant){
-                                                                                                return ((float)relevantItems)/((float) totalRelevant);
-                                                                                            });
-    std::map<std::string, std::vector<float>> averagePrecisionClass = calculateAverageMeasurements(presicionPerClass);
-    std::map<std::string, std::vector<float>> averageRecallClass = calculateAverageMeasurements(recallPerClass);
-    writeResultsToFile(presicionPerClass, averagePrecisionClass, outputFile, "precision");
-    writeResultsToFile(recallPerClass, averageRecallClass, outputFile, "recall");
-
-    std::ofstream firstRetrievedItem(firstRerievedFile);
-    for(std::map<std::string, std::string>::iterator it=firstRetrieved.begin(); it!=firstRetrieved.end(); ++it){
-        firstRetrievedItem<<it->first<<"\t"<<it->second<<std::endl;
-    }
-    firstRetrievedItem.close();*/
+    
 }
 
 template<class Distance>
@@ -162,7 +157,7 @@ std::vector<search2::ResultPair> ExperimentEvaluator<Distance>::search(const flo
 
 template <class Distance>
 std::vector<float> ExperimentEvaluator<Distance>::calculatePrecisionRecall(const std::string &idQuery,
-        const std::vector<search2::ResultPair>& distances){
+        const std::vector<search2::ResultPair>& distances, float* average){
     typedef std::vector<search2::ResultPair>::const_iterator iter;
 
     std::vector<float> precision;
@@ -181,7 +176,11 @@ std::vector<float> ExperimentEvaluator<Distance>::calculatePrecisionRecall(const
         precision.push_back(prec);
         recall.push_back(rec);
     }
+    *average = 0;
+    for(std::vector<float>::iterator it=precision.begin(); it!=precision.end(); ++it)
+	*average+=*it;
 
+    *average = *average/(float)precision.size();
     float expectedRecall = 0.1;
     std::vector<float> recalls;
     for(int i = 0; i<10; i++){
@@ -199,8 +198,9 @@ std::vector<float> ExperimentEvaluator<Distance>::calculatePrecisionRecall(const
     }
     precisionRecall.push_back(maxPres);
     i = 0;
+    currentRecall = recall[i];
     for(std::vector<float>::iterator it=recalls.begin();it!=recalls.end();++it){
-        while(currentRecall < *it){
+        while(currentRecall < *it && i <= recall.size()-1){
             currentRecall = recall[++i];
         }
         precisionRecall.push_back(precision[i]);
@@ -262,7 +262,7 @@ ExperimentEvaluator<Distance>::~ExperimentEvaluator(){
     for(map_iter it = testDesc.begin(); it!=testDesc.end(); ++it)
 	delete it->second;
     
-    for(map_iter it = testDesc.begin(); it!=testDesc.end(); ++it)
+    for(map_iter it = retrievalMap.begin(); it!=retrievalMap.end(); ++it)
 	delete it->second;	
 }
 

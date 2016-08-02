@@ -80,8 +80,12 @@ void DescriptorManager::saveDescriptors(const std::string &output) {
 }
 
 DescriptorManager::~DescriptorManager() {
+}
+
+void DescriptorManager::destroyDescriptors(){
     typedef std::map<std::string, float *>::iterator map_iter;
 
     for(map_iter iter= descriptor_map.begin(); iter!=descriptor_map.end(); ++iter)
         delete iter->second;
 }
+
