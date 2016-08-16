@@ -98,6 +98,45 @@ std::map<std::string,float *> loadFileToFloatMap(const char *filename, int* desc
     return floatMap;
 }
 
+std::vector<std::string> loadQueryFileToVector(const char* filename){
+    size_t file_size;
+    const char *file = map_file<const char*>(filename, file_size);
+    const char* aux = file;
+    const char *end_file = file+file_size;
+    char line[1000];
+    int count = 0;
+
+    std::vector<std::string> classVector;
+    while(file && file!=end_file){
+        if(*file == '\n' || file+1==end_file){
+            line[count] = '\0';
+            std::string file_line = line;
+            if(file_line.compare("")==0){
+                file++;
+                count=0;
+                continue;
+            }
+            unsigned long tab_location = file_line.find('\t');
+            std::string resultClass = file_line.substr(tab_location+1);
+            tab_location = resultClass.find('\t');
+            resultClass = resultClass.substr(tab_location+1);
+            classVector.push_back(resultClass);
+            count=0;
+        }
+        else{
+            line[count++] = *file;
+        }
+        file++;
+    }
+
+    if (munmap(const_cast<char *>(aux), file_size) == -1) {
+        perror("Error un-mmapping the file");
+        exit(-1);
+    }
+
+    return classVector;
+}
+
 void writeToFile(const char *string, const char* filename, int filesize){
     int i;
     int fd;
@@ -168,4 +207,14 @@ void writeToFile(const char *string, const char* filename, int filesize){
     /* Un-mmaping doesn't close the file, so we still need to do that.
      */
     close(fd);
+}
+
+std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){
+    std::string s = "";
+    for(std::vector<float>::const_iterator it = array.begin(); it!=array.end(); ++it){
+        std::string aux = "\t"+std::to_string(*it);
+        s += aux;
+    }
+    os<<s<<std::endl;
+    return os;
 }

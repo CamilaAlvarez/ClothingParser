@@ -82,10 +82,17 @@ void DescriptorManager::saveDescriptors(const std::string &output) {
 DescriptorManager::~DescriptorManager() {
 }
 
-void DescriptorManager::destroyDescriptors(){
-    typedef std::map<std::string, float *>::iterator map_iter;
+void DescriptorManager::destroyDescriptors(const std::map<std::string, float *>& descriptors){
+    typedef std::map<std::string, float *>::const_iterator map_iter;
 
-    for(map_iter iter= descriptor_map.begin(); iter!=descriptor_map.end(); ++iter)
+    for(map_iter iter= descriptors.begin(); iter!=descriptors.end(); ++iter)
         delete iter->second;
 }
 
+std::map<std::string, float *> DescriptorManager::loadDescriptors(const std::string &descriptorsFile) {
+    std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
+    std::map<std::string, float *> descriptor_map = loadFileToFloatMap(descriptorsFile.c_str(), &desc_size);
+    std::cout<<"LOADED DESCRIPTORS FILE"<<std::endl;
+    return descriptor_map;
+
+}

@@ -12,16 +12,6 @@
 
 typedef std::map<std::string, float *>::iterator map_iter;
 
-std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){
-    std::string s = "";
-    for(std::vector<float>::const_iterator it = array.begin(); it!=array.end(); ++it){
-        std::string aux = "\t"+std::to_string(*it);
-        s += aux;
-    }
-    os<<s<<std::endl;
-    return os;
-}
-
 std::ostream& operator<<(std::ostream& os, const PairIdVector& pair){
     std::string result = pair.id;
     os<<result;
@@ -67,13 +57,6 @@ void ExperimentEvaluator<Distance>::load(const std::map<std::string, float*> &de
     std::cout<<"FINISHED CREATING EXPERIMENT EVALUATOR"<<std::endl;
 }
 
-template <class Distance>
-ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::string &descriptorFile, const std::string &retrievalCodes,
-                                         const std::string &testingCodes, const std::string &classesFile) {
-    std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
-    std::map<std::string,float*> descriptorsMap = loadFileToFloatMap(descriptorFile.c_str(), &descSize);
-    load(descriptorsMap, retrievalCodes, testingCodes, classesFile);
-}
 
 template <class Distance>
 ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::map<std::string, float*> &descriptorsMap, const std::string &retrievalCodes,
@@ -82,13 +65,12 @@ ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::map<std::string, f
 }
 
 
-//Guardar menos cosas al principio. Me estoy comiendo la memoria!!
 template <class Distance>
-void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile, const std::string& firstRerievedFile) {
+void ExperimentEvaluator<Distance>::runRetrievalExperiments(const std::string& outputDir) {
     std::cout<<"STARTING EXPERIMENT"<<std::endl;
-    //std::map<std::string, std::string> firstRetrieved;
-    std::map<std::string, std::vector<float>> precisionRecall;
-    float totalAverage = 0;
+    std::string dir = outputDir;
+    if(outputDir[outputDir.length()-1] != '/')
+        dir += "/";
     #ifdef _OPENMP
 	omp_lock_t lock;
 	omp_init_lock(&lock);
@@ -99,10 +81,12 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
         std::vector<search2::ResultPair> results;
 	    std::string key = testKeys[i];
 	    float *query = testDesc[key];
+        std::string filename = dir+imageClassMap[key]+"/"+key+".txt";
 	    #ifdef _OPENMP
 	        omp_set_lock(&lock);
 	    #endif
 	    std::cout<<"BEGAN SEARCH NUMBER "<<++count<<" FOR: "<<key<<std::endl;
+        perfomedExperiments[filename] = imageClassMap[key];
         #ifdef _OPENMP
             omp_unset_lock(&lock);
 	    #endif
@@ -113,24 +97,17 @@ void ExperimentEvaluator<Distance>::runExperiments(const std::string &outputFile
             resultString<<j+1<<"\t"<<id<<"\t"<<imageClassMap[id]<<std::endl;
         }
         std::string finalString = resultString.str();
-        std::string filename = "results/"+imageClassMap[key]+"/"+key+".txt";
+
         writeToFile(finalString.c_str(), filename.c_str(), (int)finalString.size()+1);
-	float average;
-        precisionRecall[key] = calculatePrecisionRecall(key, results, &average);
-	totalAverage += average;
-        //firstRetrieved[key] = results[0].getId();
-        //mapResults[key] = results;
     }
-	
-    totalAverage = totalAverage/(float)testKeys.size();
-    std::stringstream ss;
-    for(std::map<std::string, std::vector<float>>::iterator it=precisionRecall.begin(); it!=precisionRecall.end(); ++it){
-	ss<<it->first<<it->second<<std::endl;	
+    std::stringstream queriesFile;
+    for(std::map<std::string, std::string>::iterator it = perfomedExperiments.begin(); it != perfomedExperiments.end();
+            ++it){
+        queriesFile<<it->first<<'\t'<<it->second<<std::endl;
     }
-    ss<<"MAP :"<<totalAverage<<std::endl;
-    std::string s = ss.str();
-    std::string f = "results/precisionRecallPerQuery.txt";
-    writeToFile(s.c_str(), f.c_str(), (int)s.size()+1); 
+    std::string queries = queriesFile.str();
+    std::string outputFile = dir+"queries.txt";
+    writeToFile(queries.c_str(), outputFile.c_str(), (int)queries.length()+1);
 
     #ifdef _OPENMP
 	omp_destroy_lock(&lock);
@@ -156,114 +133,7 @@ std::vector<search2::ResultPair> ExperimentEvaluator<Distance>::search(const flo
 }
 
 template <class Distance>
-std::vector<float> ExperimentEvaluator<Distance>::calculatePrecisionRecall(const std::string &idQuery,
-        const std::vector<search2::ResultPair>& distances, float* average){
-    typedef std::vector<search2::ResultPair>::const_iterator iter;
-
-    std::vector<float> precision;
-    std::vector<float> recall;
-    int retrieved = 0;
-    int relevant = 0;
-    std::string itemClass = imageClassMap[idQuery];
-    for(iter it = distances.begin(); it!=distances.end(); ++it){
-        std::string retrievedClass = imageClassMap[(*it).getId()];
-        if(itemClass.compare(retrievedClass)==0)
-                relevant++;
-            retrieved++;
-        float prec = ((float)relevant)/((float) retrieved);
-        float  rec = ((float) relevant/ (float) classMap[itemClass]);
-
-        precision.push_back(prec);
-        recall.push_back(rec);
-    }
-    *average = 0;
-    for(std::vector<float>::iterator it=precision.begin(); it!=precision.end(); ++it)
-	*average+=*it;
-
-    *average = *average/(float)precision.size();
-    float expectedRecall = 0.1;
-    std::vector<float> recalls;
-    for(int i = 0; i<10; i++){
-        recalls.push_back(expectedRecall);
-        expectedRecall+=0.1;
-    }
-    std::vector<float> precisionRecall;
-    int i = 0;
-    float maxPres = 0;
-    float currentRecall =  recall[i];
-
-    while(currentRecall < 0.1){
-        currentRecall = recall[++i];
-        maxPres = std::max(maxPres, precision[i]);
-    }
-    precisionRecall.push_back(maxPres);
-    i = 0;
-    currentRecall = recall[i];
-    for(std::vector<float>::iterator it=recalls.begin();it!=recalls.end();++it){
-        while(currentRecall < *it && i <= recall.size()-1){
-            currentRecall = recall[++i];
-        }
-        precisionRecall.push_back(precision[i]);
-    }
-
-    return precisionRecall;
-
-}
-
-template <class Distance>
-std::map<std::string, std::vector<float>> ExperimentEvaluator<Distance>::calculateAverageMeasurements(const std::map<std::string,
-        std::vector<PairIdVector>> &measurements){
-
-    typedef std::map<std::string,std::vector<PairIdVector>>::const_iterator iter;
-    std::map<std::string, std::vector<float>> averages;
-
-    for(iter it = measurements.begin(); it!=measurements.end(); ++it){
-        unsigned long  size = it->second[0].getValues().size();
-        std::vector<PairIdVector> measurePerClass = it->second;
-        unsigned long classSize = measurePerClass.size();
-        std::vector<float> averagePerClass;
-
-        for(unsigned long i = 0; i < size; i++) {
-            float accumulator = 0;
-            for (unsigned long j = 0; j < classSize; j++) {
-                accumulator += measurePerClass[j].getValues()[i] / (float) classSize;
-            }
-            averagePerClass.push_back(accumulator);
-        }
-
-        averages[it->first] = averagePerClass;
-    }
-    return averages;
-}
-
-template <class Distance>
-void ExperimentEvaluator<Distance>::writeResultsToFile(const std::map<std::string, std::vector<PairIdVector>> &individualResults,
-                        const std::map<std::string, std::vector<float>> &averages, const std::string &output, const std::string &type){
-    //Obtain class
-    for(std::map<std::string, int>::iterator it = classMap.begin(); it!=classMap.end(); ++it){
-        //obtain individual results
-        std::string itemClass = it->first;
-        std::vector<PairIdVector> classResults = individualResults.at(itemClass);
-        std::stringstream sstream;
-        //write results to stringstream
-        for(std::vector<PairIdVector>::iterator itert=classResults.begin(); itert!=classResults.end(); ++itert)
-		sstream<<(*itert);
-        sstream<<"-1"<<averages.at(itemClass);
-        std::string finalString = sstream.str();
-        const char * classResultsString = finalString.c_str();
-        std::string filename = "results/"+output+"_"+itemClass+"_"+type+".txt";
-        writeToFile(classResultsString, filename.c_str(), (int)finalString.size());
-    }
-
-}
-
-template <class Distance>
 ExperimentEvaluator<Distance>::~ExperimentEvaluator(){
-    for(map_iter it = testDesc.begin(); it!=testDesc.end(); ++it)
-	delete it->second;
-    
-    for(map_iter it = retrievalMap.begin(); it!=retrievalMap.end(); ++it)
-	delete it->second;	
 }
 
 template class ExperimentEvaluator<JL2>;
