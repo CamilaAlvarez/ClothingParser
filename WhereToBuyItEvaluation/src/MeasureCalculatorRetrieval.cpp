@@ -17,7 +17,7 @@ MeasureCalculatorRetrieval::MeasureCalculatorRetrieval(const std::string &querie
     for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it )
         keyListQueryList.push_back(it->first);
 
-    for(std::map<std::string, std::string>::iterator it = classes.begin(); it!=classesSize.end(); ++it )
+    for(std::map<std::string, std::string>::iterator it = classes.begin(); it!=classes.end(); ++it )
         classesSize[it->first] = std::stoi(it->second);
 }
 
@@ -133,7 +133,7 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     #ifdef _OPENMP
     omp_destroy_lock(&lock);
     #endif
-    for(std::map<std::string, int>::iterator it = classesSize.begin(); it!=classSize.end(); ++it){
+    for(std::map<std::string, int>::iterator it = classesSize.begin(); it!=classesSize.end(); ++it){
         for(int i = 0; i < accuracyVsRetrievedByClass[it->first].size(); i++){
             accuracyVsRetrievedByClass[it->first][i] /= it->second;
         }

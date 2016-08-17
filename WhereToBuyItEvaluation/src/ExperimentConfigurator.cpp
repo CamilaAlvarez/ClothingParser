@@ -78,8 +78,8 @@ void ExperimentConfigurator::executeExperiment() {
             std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calc.calculateAccuracyVsRetrieved(step, retrievedNumber);
             //std::map<std::string, std::vector<float>> precisionVsRecall = calc.calculatePrecisionVsRecall();
 
-            /*std::stringstream accuracyVsRetrievedStream;
-            accuracyVsRetrievedStream<<"STEP"<<'\t'<<step<<std::endl;
+            std::stringstream accuracyVsRetrievedStream;
+            /*accuracyVsRetrievedStream<<"STEP"<<'\t'<<step<<std::endl;
             accuracyVsRetrievedStream<<"average"<<'\t'<<averageAccuracyVsRetrieved<<std::endl;*/
             for(std::map<std::string, std::vector<float>>::iterator it = accuracyVsRetrievedByClass.begin();
                     it != accuracyVsRetrievedByClass.end(); ++it){
