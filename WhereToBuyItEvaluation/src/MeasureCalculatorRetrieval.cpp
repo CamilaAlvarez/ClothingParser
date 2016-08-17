@@ -107,6 +107,8 @@ std::vector<float> MeasureCalculatorRetrieval::calculateAverageAccuracyVsRetriev
 std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateAccuracyVsRetrieved(int step, int retrievedNumber){
     std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
     int stepNumber = ceil((double)retrievedNumber/(double)step);
+    std::map<std::string, int> queriesClasses;
+    int count = 0;
     #ifdef _OPENMP
     omp_lock_t lock;
 	omp_init_lock(&lock);
@@ -121,9 +123,15 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     #ifdef _OPENMP
         omp_set_lock(&lock);
     #endif
+        if(count%100==0){
+            std::cout<<"PROCESSED: "<<count<<std::endl;
+        }
         if(accuracyVsRetrievedByClass.find(queryClass) == accuracyVsRetrievedByClass.end())
             accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber, 0);
-        std::cout<<classesSize[queryClass]<<std::endl;
+        if(queriesClasses.find(queryClass) == queriesClasses.end())
+            queriesClasses[queryClass] = 0;
+        queriesClasses[queryClass]++;
+        count++;
         for(int j = 0; j < auxVector.size(); j++)
             accuracyVsRetrievedByClass[queryClass][j] += auxVector[j];
     #ifdef _OPENMP
@@ -135,6 +143,7 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     #endif
     for(std::map<std::string, int>::iterator it = classesSize.begin(); it!=classesSize.end(); ++it){
         for(int i = 0; i < accuracyVsRetrievedByClass[it->first].size(); i++){
+            accuracyVsRetrievedByClass[it->first][i] /= queriesClasses[it->first];
             accuracyVsRetrievedByClass[it->first][i] /= it->second;
         }
     }
