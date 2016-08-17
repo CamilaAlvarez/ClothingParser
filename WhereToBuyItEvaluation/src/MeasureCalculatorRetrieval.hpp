@@ -20,6 +20,7 @@ public:
 
 private:
     std::map<std::string, std::string> queryList;
+    std::vector<std::string> keyListQueryList;
     double calculateAveragePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
     std::vector<double> calculatePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
     void correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, std::string expectedClass,

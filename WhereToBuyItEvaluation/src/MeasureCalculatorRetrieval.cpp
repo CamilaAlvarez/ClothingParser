@@ -5,19 +5,39 @@
 #include "MeasureCalculatorRetrieval.hpp"
 #include "utils.hpp"
 #include <math.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 MeasureCalculatorRetrieval::MeasureCalculatorRetrieval(const std::string &queriesFile) {
     queryList = loadFileToMap(queriesFile.c_str());
+    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it )
+        keyListQueryList.push_back(it->first);
 }
 
 float MeasureCalculatorRetrieval::calculateMAP() {
     double accumulator = 0;
-    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it){
-        std::string queryClass = it->second;
-        std::vector<std::string> retrievedClasses = loadQueryFileToVector(it->first.c_str());
-        accumulator += calculateAveragePrecision(queryClass, retrievedClasses);
+    #ifdef _OPENMP
+    omp_lock_t lock;
+	omp_init_lock(&lock);
+    #endif
+    #pragma omp parallel for
+    for(int i = 0; i < keyListQueryList.size(); i++){
+        std::string query = keyListQueryList[i];
+        std::string queryClass = queryList[query];
+        std::vector<std::string> retrievedClasses = loadQueryFileToVector(query.c_str());
+        double aux = calculateAveragePrecision(queryClass, retrievedClasses);
+        #ifdef _OPENMP
+        omp_set_lock(&lock);
+        #endif
+        accumulator += aux;
+        #ifdef _OPENMP
+        omp_unset_lock(&lock);
+        #endif
     }
-
+    #ifdef _OPENMP
+    omp_destroy_lock(&lock);
+    #endif
     double map = accumulator/queryList.size();
     return (float)map;
 }
@@ -50,12 +70,26 @@ std::vector<double> MeasureCalculatorRetrieval::calculatePrecision(std::string e
 std::vector<float> MeasureCalculatorRetrieval::calculateAverageAccuracyVsRetrieved(int step, int retrievedNumber) {
 
     std::vector<float> recallVsRetrieved(ceil((double)retrievedNumber/(double)step), 0);
-    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it){
-        std::string queryClass = it->second;
-        std::vector<std::string> retrievedClasses = loadQueryFileToVector(it->first.c_str());
+    #ifdef _OPENMP
+    omp_lock_t lock;
+	omp_init_lock(&lock);
+    #endif
+    #pragma omp parallel for
+    for(int i = 0; i < keyListQueryList.size(); i++){
+        std::string query = keyListQueryList[i];
+        std::string queryClass = queryList[query];
+        std::vector<std::string> retrievedClasses = loadQueryFileToVector(query.c_str());
+        #ifdef _OPENMP
+        omp_set_lock(&lock);
+        #endif
         correctlyRetrievedItemsByStep(step, recallVsRetrieved, queryClass, retrievedClasses);
+        #ifdef _OPENMP
+        omp_unset_lock(&lock);
+        #endif
     }
-
+    #ifdef _OPENMP
+    omp_destroy_lock(&lock);
+    #endif
     for(int i = 0; i < recallVsRetrieved.size(); i++){
         recallVsRetrieved[i] = recallVsRetrieved[i]/queryList.size();
     }
@@ -68,17 +102,35 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
     std::map<std::string, int> classSize;
     int stepNumber = ceil((double)retrievedNumber/(double)step);
-    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it){
-        std::string queryClass = it->second;
+    #ifdef _OPENMP
+    omp_lock_t lock;
+	omp_init_lock(&lock);
+    #endif
+    #pragma omp parallel for
+    for(int i = 0; i < keyListQueryList.size(); i++ ){
+        std::string query = keyListQueryList[i];
+        std::string queryClass = queryList[query];
+        std::vector<std::string> retrievedClasses = loadQueryFileToVector(query.c_str());
+        std::vector<float> auxVector(stepNumber, 0);
+        correctlyRetrievedItemsByStep(step, auxVector, queryClass, retrievedClasses);
+    #ifdef _OPENMP
+        omp_set_lock(&lock);
+    #endif
         if(accuracyVsRetrievedByClass.find(queryClass) == accuracyVsRetrievedByClass.end())
             accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber, 0);
         if(classSize.find(queryClass) == classSize.end())
             classSize[queryClass] = 0;
         classSize[queryClass]++;
-        std::vector<std::string> retrievedClasses = loadQueryFileToVector(it->first.c_str());
-        correctlyRetrievedItemsByStep(step, accuracyVsRetrievedByClass[queryClass], queryClass, retrievedClasses);
+        std::cout<<classSize[queryClass]<<std::endl;
+        for(int j = 0; j < auxVector.size(); j++)
+            accuracyVsRetrievedByClass[queryClass][j] += auxVector[j];
+    #ifdef _OPENMP
+        omp_unset_lock(&lock);
+    #endif
     }
-
+    #ifdef _OPENMP
+    omp_destroy_lock(&lock);
+    #endif
     for(std::map<std::string, int>::iterator it = classSize.begin(); it!=classSize.end(); ++it){
         for(int i = 0; i < accuracyVsRetrievedByClass[it->first].size(); i++){
             accuracyVsRetrievedByClass[it->first][i] /= it->second;
@@ -109,13 +161,27 @@ void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::ve
 
 std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculatePrecisionVsRecall(){
     std::map<std::string, std::vector<float>> precisionRecallMap;
-    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it != queryList.end(); ++it){
-        std::string query = it->first;
-        std::string queryClass = it->second;
+    #ifdef _OPENMP
+    omp_lock_t lock;
+	omp_init_lock(&lock);
+    #endif
+    #pragma omp parallel for
+    for(int i = 0; i < keyListQueryList.size(); i++){
+        std::string query = keyListQueryList[i];
+        std::string queryClass = queryList[query];
         std::vector<float> precisionRecallQuery = calculatePrecisionVsRecallForQuery(query, queryClass);
+    #ifdef _OPENMP
+        omp_set_lock(&lock);
+    #endif
         precisionRecallMap[query] = precisionRecallQuery;
-    }
+    #ifdef _OPENMP
+        omp_unset_lock(&lock);
+    #endif
 
+    }
+    #ifdef _OPENMP
+    omp_destroy_lock(&lock);
+    #endif
     return precisionRecallMap;
 }
 
