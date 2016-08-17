@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     if((it = std::find(args.begin(), args.end(), "-config_file")) == args.end()){
         throw missingArgumentException;
     }
-    if(*(it+1) == args.end())
+    if((it+1) == args.end())
         throw missingArgumentException;
 
     std::string configFile = *(it+1);

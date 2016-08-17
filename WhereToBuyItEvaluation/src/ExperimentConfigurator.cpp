@@ -6,8 +6,9 @@
 #include "DescriptorManager.hpp"
 #include "ExperimentEvaluator.hpp"
 #include "MeasureCalculatorRetrieval.hpp"
-#include "<string>"
+#include <string>
 #include "utils.hpp"
+#include <jmsr/preprocessing.h>
 
 ExperimentConfigurator::ExperimentConfigurator(const std::string &configFile):
         configuration(ConfigFile(configFile, '\t')){
@@ -55,8 +56,8 @@ void ExperimentConfigurator::executeExperiment() {
         }
         else if (!experimentType.compare("CLASSIFICATION")) {
             DescriptorManager manager("configFiles/googleNetLoss1Fc.config");
-            calculateDescriptors(manager, "neededFiles/images_ids.txt", descFile);
-            manager.destroyDescriptors(configuration);
+           // calculateDescriptors(manager, "neededFiles/images_ids.txt", descFile);
+           // manager.destroyDescriptors(configuration);
         }
     }
 
@@ -65,18 +66,17 @@ void ExperimentConfigurator::executeExperiment() {
         //query file must exist
         JUtil::jmsr_assert(configuration.isDefined("QUERIES_FILE"), "Missing QUERIES_FILE parameter");
         std::string queriesFile = configuration.getValue("QUERIES_FILE");
-        std::outputDirCopy = outputDir;
         if(!configuration.getValue("CALCULATE_MEASUREMENTS").compare("RETRIEVAL")){
             JUtil::jmsr_assert(configuration.isDefined("STEP"), "Missing STEP parameter");
             int step = std::stoi(configuration.getValue("STEP"));
             JUtil::jmsr_assert(configuration.isDefined("RETRIEVED_ITEMS"), "Missing RETRIEVED_ITEMS parameter");
-            int retrivedNumber = std::atoi(configuration.getValue("RETRIEVED_ITEMS"));
+            int retrievedNumber = std::stoi(configuration.getValue("RETRIEVED_ITEMS"));
             MeasureCalculatorRetrieval calc(queriesFile);
 
             float MAP = calc.calculateMAP();
-            std::vector<float> averageAccuracyVsRetrieved = calculateAverageAccuracyVsRetrieved(step, retrievedNumber);
-            std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calculateAccuracyVsRetrieved(step, retrievedNumber);
-            std::map<std::string, std::vector<float>> precisionVsRecall = calculatePrecisionVsRecall();
+            std::vector<float> averageAccuracyVsRetrieved = calc.calculateAverageAccuracyVsRetrieved(step, retrievedNumber);
+            std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calc.calculateAccuracyVsRetrieved(step, retrievedNumber);
+            std::map<std::string, std::vector<float>> precisionVsRecall = calc.calculatePrecisionVsRecall();
 
             std::stringstream accuracyVsRetrievedStream;
             accuracyVsRetrievedStream<<"STEP"<<'\t'<<step<<std::endl;
@@ -87,8 +87,8 @@ void ExperimentConfigurator::executeExperiment() {
             }
 
             std::string finalString = accuracyVsRetrievedStream.str();
-
-            writeToFile(finalString.c_str(), outputDir+"accuracyVsRetrieved.txt", (int)finalString.length()+1);
+	    std::string output = outputDir+"accuracyVsRetrieved.txt";
+            writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
 
             std::stringstream precisionRecallStream;
             precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
@@ -97,7 +97,8 @@ void ExperimentConfigurator::executeExperiment() {
                 precisionRecallStream<<it->first<<'\t'<<it->second<<std::endl;
             }
             finalString = precisionRecallStream.str();
-            writeToFile(finalString.c_str(), outputDir+"precisionVsRecall.txt", (int)finalString.length()+1);
+	    output = outputDir+"precisionVsRecall.txt";
+            writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
 
         }
     }

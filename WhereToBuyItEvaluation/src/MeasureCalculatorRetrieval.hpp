@@ -2,11 +2,14 @@
 // Created by Camila Alvarez on 05-08-16.
 //
 
-#ifndef WHERETOBUYITEVALUATION_MEASURECALCULATOR_HPP
-#define WHERETOBUYITEVALUATION_MEASURECALCULATOR_HPP
+#ifndef WHERETOBUYITEVALUATION_MEASURECALCULATORRETRIEVAL_HPP
+#define WHERETOBUYITEVALUATION_MEASURECALCULATORRETRIEVAL_HPP
 
-#import "MeasureCalculator.hpp"
-
+#include "MeasureCalculator.hpp"
+#include <iostream>
+#include <vector>
+#include <map>
+ 
 class MeasureCalculatorRetrieval: public MeasureCalculator {
 public:
     MeasureCalculatorRetrieval(const std::string &queriesFile); //Map query -> clase correcta

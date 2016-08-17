@@ -7,7 +7,7 @@
 #include <math.h>
 
 MeasureCalculatorRetrieval::MeasureCalculatorRetrieval(const std::string &queriesFile) {
-    queryList = loadFileToMap(queriesFile);
+    queryList = loadFileToMap(queriesFile.c_str());
 }
 
 float MeasureCalculatorRetrieval::calculateMAP() {
@@ -57,7 +57,7 @@ std::vector<float> MeasureCalculatorRetrieval::calculateAverageAccuracyVsRetriev
     }
 
     for(int i = 0; i < recallVsRetrieved.size(); i++){
-        recallVsRetrieved[i] = recallVsRetrieved/queryList.size();
+        recallVsRetrieved[i] = recallVsRetrieved[i]/queryList.size();
     }
 
     return recallVsRetrieved;
@@ -70,13 +70,13 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     int stepNumber = ceil((double)retrievedNumber/(double)step);
     for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it){
         std::string queryClass = it->second;
-        if(accuracyVsRetrievedByClass[queryClass] == accuracyVsRetrievedByClass.end())
+        if(accuracyVsRetrievedByClass.find(queryClass) == accuracyVsRetrievedByClass.end())
             accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber, 0);
-        if(classSize[queryClass] == classSize.end())
+        if(classSize.find(queryClass) == classSize.end())
             classSize[queryClass] = 0;
         classSize[queryClass]++;
         std::vector<std::string> retrievedClasses = loadQueryFileToVector(it->first.c_str());
-        correctlyRetrievedItemsByStep(step, accuaracyVsRetrievedByClass[queryClass], queryClass, retrievedClasses);
+        correctlyRetrievedItemsByStep(step, accuracyVsRetrievedByClass[queryClass], queryClass, retrievedClasses);
     }
 
     for(std::map<std::string, int>::iterator it = classSize.begin(); it!=classSize.end(); ++it){
@@ -126,7 +126,7 @@ std::vector<float> MeasureCalculatorRetrieval::calculatePrecisionVsRecallForQuer
     for(int i = 0; i < retrievedClasses.size(); i++){
         if(!queryClass.compare(retrievedClasses[i])){
             relevant++;
-            retrievedVsRelevant[relevant] = (float)relevant/(float)i;
+            retrievedVsPrecision[relevant] = (float)relevant/(float)i;
         }
     }
 

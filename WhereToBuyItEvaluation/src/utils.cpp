@@ -18,6 +18,7 @@ void handle_error(const char* msg){
 template <typename T>
 T map_file(const char* filename, size_t& size){
     int fd = open(filename, O_RDONLY);
+    std::cout<<filename<<std::endl;
     if(fd == -1)
         handle_error("open");
 

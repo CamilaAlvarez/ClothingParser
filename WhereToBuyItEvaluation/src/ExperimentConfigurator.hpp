@@ -5,7 +5,7 @@
 #ifndef WHERETOBUYITEVALUATION_EXPERIMENTCONFIGURATOR_HPP
 #define WHERETOBUYITEVALUATION_EXPERIMENTCONFIGURATOR_HPP
 
-#include <jmsr/preprocessing.h>
+#include <jmsr/JUtil.h>
 #include <vector>
 #include <string>
 
