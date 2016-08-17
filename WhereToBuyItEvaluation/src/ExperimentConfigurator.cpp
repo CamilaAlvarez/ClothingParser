@@ -42,12 +42,12 @@ void ExperimentConfigurator::executeExperiment() {
         manager.saveDescriptors(descFile);
         descriptors = manager.getDescriptorMap();
     }
-    else{
+    else if(!calculateDescriptors.compare("LOAD")){
         descriptors = DescriptorManager::loadDescriptors(descFile);
     }
 
     //Run experiments
-    if(configuration.isDefined("EXPERIMENT_TYPE")) {
+    if(configuration.isDefined("EXPERIMENT_TYPE") && (!calculateDescriptors.compare("YES") || !calculateDescriptors.compare("LOAD"))) {
         if (!experimentType.compare("RETRIEVAL")) {
             JUtil::jmsr_assert(configuration.isDefined("RETRIEVAL_IMAGES"), "Missing RETRIEVAL_IMAGES parameter");
             std::string retrievalImages = configuration.getValue("RETRIEVAL_IMAGES");
@@ -71,23 +71,23 @@ void ExperimentConfigurator::executeExperiment() {
             int step = std::stoi(configuration.getValue("STEP"));
             JUtil::jmsr_assert(configuration.isDefined("RETRIEVED_ITEMS"), "Missing RETRIEVED_ITEMS parameter");
             int retrievedNumber = std::stoi(configuration.getValue("RETRIEVED_ITEMS"));
-            MeasureCalculatorRetrieval calc(queriesFile);
+            MeasureCalculatorRetrieval calc(queriesFile, classesFile);
 
-            float MAP = calc.calculateMAP();
-            std::vector<float> averageAccuracyVsRetrieved = calc.calculateAverageAccuracyVsRetrieved(step, retrievedNumber);
+            //float MAP = calc.calculateMAP();
+            //std::vector<float> averageAccuracyVsRetrieved = calc.calculateAverageAccuracyVsRetrieved(step, retrievedNumber);
             std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calc.calculateAccuracyVsRetrieved(step, retrievedNumber);
-            std::map<std::string, std::vector<float>> precisionVsRecall = calc.calculatePrecisionVsRecall();
+            //std::map<std::string, std::vector<float>> precisionVsRecall = calc.calculatePrecisionVsRecall();
 
-            std::stringstream accuracyVsRetrievedStream;
+            /*std::stringstream accuracyVsRetrievedStream;
             accuracyVsRetrievedStream<<"STEP"<<'\t'<<step<<std::endl;
-            accuracyVsRetrievedStream<<"average"<<'\t'<<averageAccuracyVsRetrieved<<std::endl;
+            accuracyVsRetrievedStream<<"average"<<'\t'<<averageAccuracyVsRetrieved<<std::endl;*/
             for(std::map<std::string, std::vector<float>>::iterator it = accuracyVsRetrievedByClass.begin();
                     it != accuracyVsRetrievedByClass.end(); ++it){
                 accuracyVsRetrievedStream<<it->first<<'\t'<<it->second<<std::endl;
             }
 
-            std::string finalString = accuracyVsRetrievedStream.str();
-	    std::string output = outputDir+"accuracyVsRetrieved.txt";
+            /*std::string finalString = accuracyVsRetrievedStream.str();
+	        std::string output = outputDir+"accuracyVsRetrieved.txt";
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
 
             std::stringstream precisionRecallStream;
@@ -98,7 +98,7 @@ void ExperimentConfigurator::executeExperiment() {
             }
             finalString = precisionRecallStream.str();
 	    output = outputDir+"precisionVsRecall.txt";
-            writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
+            writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);*/
 
         }
     }

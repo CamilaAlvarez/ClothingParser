@@ -12,7 +12,7 @@
  
 class MeasureCalculatorRetrieval: public MeasureCalculator {
 public:
-    MeasureCalculatorRetrieval(const std::string &queriesFile); //Map query -> clase correcta
+    MeasureCalculatorRetrieval(const std::string &queriesFile, const std::string& classesFile); //Map query -> clase correcta
     float calculateMAP();
     std::vector<float> calculateAverageAccuracyVsRetrieved(int step, int retrievedNumber);
     std::map<std::string, std::vector<float>> calculateAccuracyVsRetrieved(int step, int retrievedNumber);
@@ -20,6 +20,7 @@ public:
 
 private:
     std::map<std::string, std::string> queryList;
+    std::map<std::string, std::string> classesSize;
     std::vector<std::string> keyListQueryList;
     double calculateAveragePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
     std::vector<double> calculatePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
