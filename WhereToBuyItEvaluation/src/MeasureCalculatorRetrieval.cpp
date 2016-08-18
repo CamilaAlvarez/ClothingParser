@@ -88,7 +88,7 @@ std::vector<float> MeasureCalculatorRetrieval::calculateAverageAccuracyVsRetriev
         #ifdef _OPENMP
         omp_set_lock(&lock);
         #endif
-        correctlyRetrievedItemsByStep(step, recallVsRetrieved, queryClass, retrievedClasses);
+        //correctlyRetrievedItemsByStep(step, recallVsRetrieved, queryClass, retrievedClasses);
         #ifdef _OPENMP
         omp_unset_lock(&lock);
         #endif
@@ -157,12 +157,12 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     return accuracyVsRetrievedByClass;*/
 }
 
-void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, relevantConditionCalculator* condition,
+void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, RelevantConditionCalculator* condition,
                                                       const std::map<std::string, std::string>& retrievedElements) {
     int index = 0;
     int resultNumber = 0;
     int accumulator = 0;
-    for (std::map<std::string, std::string>::const_iterator it = retrievedClasses.begin(); it!=retrievedClasses.end(); ++it) {
+    for (std::map<std::string, std::string>::const_iterator it = retrievedElements.begin(); it!=retrievedElements.end(); ++it) {
         if(condition->isRelevant(it->second, it->first))
             accumulator++;
         index++;
@@ -252,14 +252,14 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateE
     std::function<RelevantConditionCalculator* (std::string, std::string)> condBuilder = [&](std::string query,
                                                                                              std::string queryClass)-> RelevantConditionCalculator* {
         std::size_t start = query.find_last_of("/");
-        std::size_t end = query.fin_last_of(".");
+        std::size_t end = query.find_last_of(".");
         std::string code = query.substr(start+1, end);
-        ExactRelevantCalculator conditionCalculator = new ExactRelevantCalculator(queryVsProducts[code], queryClass,
+        ExactRelevantCalculator* conditionCalculator = new ExactRelevantCalculator(queryVsProducts[code], queryClass,
                                                                                   &retrievalVsProducts);
         return conditionCalculator;
     };
 
-    return genericAccuracyVsRetrieved(step, retrievalVsProducts, condBuilder);
+    return genericAccuracyVsRetrieved(step, retrievedNumber, condBuilder);
     /*std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
     int stepNumber = ceil((double)retrievedNumber/(double)step);
     std::map<std::string, int> queriesClasses;
@@ -323,7 +323,8 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
     for(int i = 0; i < keyListQueryList.size(); i++ ){
         std::string query = keyListQueryList[i];
         std::string queryClass = queryList[query];
-        std::map<std::string, std::string> retrievedCodesClasses = loadFileToMap(query.c_str(), 2, 3);
+        std::map<std::string, std::string> retrievedCodeClasses = loadFileToMap(query.c_str(), 2, 3);
+        std::vector<float> auxVector(stepNumber, 0);
         RelevantConditionCalculator* conditionCalculator = conditionBuilder(query, queryClass);
         correctlyRetrievedItemsByStep(step, auxVector, conditionCalculator, retrievedCodeClasses);
         delete conditionCalculator;

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <algorithm>
+#include <functional>
 
 class RelevantConditionCalculator{
 public:
@@ -31,10 +33,10 @@ public:
 class ExactRelevantCalculator : public RelevantConditionCalculator{
 public:
     bool isRelevant(std::string retrievedClass, std::string retrievedId){
-        return !(retrievedClass.compare(expectedClass) || expectedValue.compare((*retrievalVsProd)[retrievedId]));
+        return !(retrievedClass.compare(expectedClass) || expectedProd.compare((*retrievalVsProd)[retrievedId]));
     }
     ExactRelevantCalculator(std::string expectedProduct, std::string expectedClass, std::map<std::string,
-            std::string>* retrievalMap): RelevantConditionCalculator(expectedProduct, retrievalMap, expectedClass){};
+            std::string>* retrievalMap): RelevantConditionCalculator(expectedProduct, expectedClass, retrievalMap){};
 };
 
 
@@ -55,7 +57,7 @@ private:
     std::vector<std::string> keyListQueryList;
     double calculateAveragePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
     std::vector<double> calculatePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
-    void correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, std::string expectedClass,
+    void correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, RelevantConditionCalculator* calculator,
                                        const std::map<std::string, std::string>& retrievedElements);
     std::vector<float> calculatePrecisionVsRecallForQuery(const std::string &query, const std::string &queryClass);
     std::map<std::string, std::vector<float>> genericAccuracyVsRetrieved(int step, int retrievedNumber,
