@@ -66,7 +66,32 @@ void ExperimentConfigurator::executeExperiment() {
         //query file must exist
         JUtil::jmsr_assert(configuration.isDefined("QUERIES_FILE"), "Missing QUERIES_FILE parameter");
         std::string queriesFile = configuration.getValue("QUERIES_FILE");
-        if(!configuration.getValue("CALCULATE_MEASUREMENTS").compare("RETRIEVAL")){
+        if(!configuration.getValue("CALCULATE_MEASUREMENTS").compare("EXACT_RETRIEVAL")){
+            JUtil::jmsr_assert(configuration.isDefined("STEP"), "Missing STEP parameter");
+            int step = std::stoi(configuration.getValue("STEP"));
+            JUtil::jmsr_assert(configuration.isDefined("RETRIEVED_ITEMS"), "Missing RETRIEVED_ITEMS parameter");
+            int retrievedNumber = std::stoi(configuration.getValue("RETRIEVED_ITEMS"));
+            JUtil::jmsr_assert(configuration.isDefined("RETRIEVAL_ITEMS_PRODUCTS"), "Missing RETRIEVAL_ITEMS_PRODUCTS parameter");
+            std::string retrievalVsProductsFile = configuration.getValue("RETRIEVAL_ITEMS_PRODUCTS");
+            MeasureCalculatorRetrieval calc(queriesFile, classesFile);
+
+
+            std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calc.calculateExactAccuracyVsRetrieved(step,
+                                                                                                                          retrievedNumber,
+                                                                                                                          testingImages,
+                                                                                                                          retrievalVsProductsFile);
+
+            std::stringstream accuracyVsRetrievedStream;
+            accuracyVsRetrievedStream<<"STEP"<<'\t'<<step<<std::endl;
+            for(std::map<std::string, std::vector<float>>::iterator it = accuracyVsRetrievedByClass.begin();
+                    it != accuracyVsRetrievedByClass.end(); ++it){
+                accuracyVsRetrievedStream<<it->first<<'\t'<<it->second<<std::endl;
+            }
+            std::string finalString = accuracyVsRetrievedStream.str();
+	        std::string output = outputDir+"exactAccuracyVsRetrieved.txt";
+
+        }
+        else if(!configuration.getValue("CALCULATE_MEASUREMENTS").compare("RETRIEVAL")){
             JUtil::jmsr_assert(configuration.isDefined("STEP"), "Missing STEP parameter");
             int step = std::stoi(configuration.getValue("STEP"));
             JUtil::jmsr_assert(configuration.isDefined("RETRIEVED_ITEMS"), "Missing RETRIEVED_ITEMS parameter");
@@ -82,10 +107,9 @@ void ExperimentConfigurator::executeExperiment() {
             /*accuracyVsRetrievedStream<<"STEP"<<'\t'<<step<<std::endl;
             accuracyVsRetrievedStream<<"average"<<'\t'<<averageAccuracyVsRetrieved<<std::endl;*/
             for(std::map<std::string, std::vector<float>>::iterator it = accuracyVsRetrievedByClass.begin();
-                    it != accuracyVsRetrievedByClass.end(); ++it){
+                it != accuracyVsRetrievedByClass.end(); ++it){
                 accuracyVsRetrievedStream<<it->first<<'\t'<<it->second<<std::endl;
             }
-
             /*std::string finalString = accuracyVsRetrievedStream.str();
 	        std::string output = outputDir+"accuracyVsRetrieved.txt";
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
@@ -99,7 +123,6 @@ void ExperimentConfigurator::executeExperiment() {
             finalString = precisionRecallStream.str();
 	    output = outputDir+"precisionVsRecall.txt";
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);*/
-
         }
     }
 

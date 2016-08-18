@@ -10,6 +10,24 @@
 #include <stdio.h>
 #include <cstring>
 
+std::string getStringFromColumn(const std::string& columnString, int column){
+    std::string line = columnString;
+    int localColumn = column;
+    unsigned long tab_location;
+    for(;;){
+        tab_location = line.find('\t');
+        if(localColumn == 1){
+            if(tab_location == std::string::npos)
+                tab_location = line.length()+1;
+            line = line.substr(0, tab_location);
+            break;
+        }
+        line = line.substr(tab_location + 1);
+        localColumn--;
+    }
+    return line;
+}
+
 void handle_error(const char* msg){
     perror(msg);
     exit(255);
@@ -18,7 +36,6 @@ void handle_error(const char* msg){
 template <typename T>
 T map_file(const char* filename, size_t& size){
     int fd = open(filename, O_RDONLY);
-    std::cout<<filename<<std::endl;
     if(fd == -1)
         handle_error("open");
 
@@ -36,7 +53,8 @@ T map_file(const char* filename, size_t& size){
     return addr;
 }
 
-std::map<std::string, std::string> loadFileToMap(const char *image_filename){
+//Takes first two columns
+std::map<std::string, std::string> loadFileToMap(const char *image_filename, int key_column, int value_column){
     size_t file_size;
     const char *file = map_file<const char*>(image_filename, file_size);
     const char* aux = file;
@@ -54,9 +72,8 @@ std::map<std::string, std::string> loadFileToMap(const char *image_filename){
 		count=0;
 		continue;
 	    }
-            unsigned long tab_location = file_line.find('\t');
-            std::string id = file_line.substr(0,tab_location);
-            std::string image = file_line.substr(tab_location+1);
+            std::string id = getStringFromColumn(file_line, key_column);
+            std::string image = getStringFromColumn(file_line, value_column);
             image_map[id] = image;
             count=0;
         }
@@ -99,7 +116,7 @@ std::map<std::string,float *> loadFileToFloatMap(const char *filename, int* desc
     return floatMap;
 }
 
-std::vector<std::string> loadQueryFileToVector(const char* filename){
+std::vector<std::string> loadQueryFileToVector(const char* filename, int column){
     size_t file_size;
     const char *file = map_file<const char*>(filename, file_size);
     const char* aux = file;
@@ -117,11 +134,9 @@ std::vector<std::string> loadQueryFileToVector(const char* filename){
                 count=0;
                 continue;
             }
-            unsigned long tab_location = file_line.find('\t');
-            std::string resultClass = file_line.substr(tab_location+1);
-            tab_location = resultClass.find('\t');
-            resultClass = resultClass.substr(tab_location+1);
-            classVector.push_back(resultClass);
+
+            std::string columnString = getStringFromColumn(file_line, column);
+            classVector.push_back(columnString);
             count=0;
         }
         else{
@@ -219,3 +234,4 @@ std::ostream& operator<<(std::ostream& os, const std::vector<float>& array){
     os<<s<<std::endl;
     return os;
 }
+
