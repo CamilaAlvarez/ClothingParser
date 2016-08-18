@@ -13,7 +13,9 @@
 class RelevantConditionCalculator{
 public:
     virtual bool isRelevant(std::string retrievedClass, std::string retrievedId) = 0;
-
+    RelevantConditionCalculator(std::string expectedClass):expectedClass(expectedClass){}
+    RelevantConditionCalculator(std::string expectedProduct, std::string expectedClass, std::map<std::string,
+            std::string>* retrievalMap): expectedProd(expectedProduct), retrievalVsProd(retrievalMap), expectedClass(expectedClass){}
 protected:
     std::string expectedProd;
     std::string expectedClass;
@@ -23,7 +25,7 @@ protected:
 class RelevantClassCalculator : public RelevantConditionCalculator{
 public:
     bool isRelevant(std::string retrievedClass, std::string retrievedId){ return !retrievedClass.compare(expectedClass); }
-    RelevantClassCalculator(std::string expectedClass): expectedClass(expectedClass){}
+    RelevantClassCalculator(std::string expectedClass): RelevantConditionCalculator(expectedClass){}
 };
 
 class ExactRelevantCalculator : public RelevantConditionCalculator{
@@ -32,7 +34,7 @@ public:
         return !(retrievedClass.compare(expectedClass) || expectedValue.compare((*retrievalVsProd)[retrievedId]));
     }
     ExactRelevantCalculator(std::string expectedProduct, std::string expectedClass, std::map<std::string,
-            std::string>* retrievalMap): expectedProd(expectedProduct), retrievalVsProd(retrievalMap), expectedClass(expectedClass){};
+            std::string>* retrievalMap): RelevantConditionCalculator(expectedProduct, retrievalMap, expectedClass){};
 };
 
 
