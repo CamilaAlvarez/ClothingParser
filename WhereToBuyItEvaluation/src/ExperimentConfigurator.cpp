@@ -88,8 +88,8 @@ void ExperimentConfigurator::executeExperiment() {
                 accuracyVsRetrievedStream<<it->first<<'\t'<<it->second<<std::endl;
             }
             std::string finalString = accuracyVsRetrievedStream.str();
-	        std::string output = outputDir+"exactAccuracyVsRetrieved.txt";
-
+	    std::string output = outputDir+"exactAccuracyVsRetrieved.txt";
+	    writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
         }
         else if(!configuration.getValue("CALCULATE_MEASUREMENTS").compare("RETRIEVAL")){
             JUtil::jmsr_assert(configuration.isDefined("STEP"), "Missing STEP parameter");

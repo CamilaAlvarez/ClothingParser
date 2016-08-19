@@ -14,8 +14,9 @@ MeasureCalculatorRetrieval::MeasureCalculatorRetrieval(const std::string &querie
     queryList = loadFileToMap(queriesFile.c_str());
     std::map<std::string, std::string> classes = loadFileToMap(classesFile.c_str());
 
-    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it )
-        keyListQueryList.push_back(it->first);
+    for(std::map<std::string, std::string>::iterator it = queryList.begin(); it!=queryList.end(); ++it ){
+	    keyListQueryList.push_back(it->first);
+    }
 
     for(std::map<std::string, std::string>::iterator it = classes.begin(); it!=classes.end(); ++it )
         classesSize[it->first] = std::stoi(it->second);
@@ -253,12 +254,12 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateE
                                                                                              std::string queryClass)-> RelevantConditionCalculator* {
         std::size_t start = query.find_last_of("/");
         std::size_t end = query.find_last_of(".");
-        std::string code = query.substr(start+1, end);
+        std::string code = query.substr(start+1, end-start-1);
         ExactRelevantCalculator* conditionCalculator = new ExactRelevantCalculator(queryVsProducts[code], queryClass,
                                                                                   &retrievalVsProducts);
         return conditionCalculator;
     };
-
+    std::cout<<"CALCULATING EXACT ACCURACY VS RETRIEVAL"<<std::endl;
     return genericAccuracyVsRetrieved(step, retrievedNumber, condBuilder);
     /*std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
     int stepNumber = ceil((double)retrievedNumber/(double)step);
