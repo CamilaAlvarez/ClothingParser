@@ -58,7 +58,7 @@ private:
     double calculateAveragePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
     std::vector<double> calculatePrecision(std::string expectedClass, const std::vector<std::string>& retrievedClasses);
     void correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, RelevantConditionCalculator* calculator,
-                                       const std::map<std::string, std::string>& retrievedElements);
+                                       const std::map<std::string, std::string>& retrievedElements, const std::vector<std::string>& retrievedCodes);
     std::vector<float> calculatePrecisionVsRecallForQuery(const std::string &query, const std::string &queryClass);
     std::map<std::string, std::vector<float>> genericAccuracyVsRetrieved(int step, int retrievedNumber,
                                                                          std::function<RelevantConditionCalculator* (std::string, std::string)> conditionBuilder);

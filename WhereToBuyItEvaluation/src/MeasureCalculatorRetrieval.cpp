@@ -159,12 +159,13 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
 }
 
 void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, RelevantConditionCalculator* condition,
-                                                      const std::map<std::string, std::string>& retrievedElements) {
+                                                      const std::map<std::string, std::string>& retrievedElements, const std::vector<std::string>& retrievedCodes) {
     int index = 0;
     int resultNumber = 0;
     int accumulator = 0;
-    for (std::map<std::string, std::string>::const_iterator it = retrievedElements.begin(); it!=retrievedElements.end(); ++it) {
-        if(condition->isRelevant(it->second, it->first))
+    for (std::vector<std::string>::const_iterator it = retrievedCodes.begin(); it!=retrievedCodes.end(); ++it) {
+        std::string code = *it;
+        if(condition->isRelevant(retrievedElements[code], code))
             accumulator++;
         index++;
         if(index%step==0){
@@ -325,9 +326,10 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
         std::string query = keyListQueryList[i];
         std::string queryClass = queryList[query];
         std::map<std::string, std::string> retrievedCodeClasses = loadFileToMap(query.c_str(), 2, 3);
+        std::vector<std::string> retrievedCodes = loadQueryFileToVector(query.c_str());
         std::vector<float> auxVector(stepNumber, 0);
         RelevantConditionCalculator* conditionCalculator = conditionBuilder(query, queryClass);
-        correctlyRetrievedItemsByStep(step, auxVector, conditionCalculator, retrievedCodeClasses);
+        correctlyRetrievedItemsByStep(step, auxVector, conditionCalculator, retrievedCodeClasses, retrievedCodes);
         delete conditionCalculator;
 #ifdef _OPENMP
         omp_set_lock(&lock);
