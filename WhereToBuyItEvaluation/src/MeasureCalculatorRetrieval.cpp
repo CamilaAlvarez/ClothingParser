@@ -164,8 +164,9 @@ void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::ve
     int resultNumber = 0;
     int accumulator = 0;
     for (std::vector<std::string>::const_iterator it = retrievedCodes.begin(); it!=retrievedCodes.end(); ++it) {
-        std::string code = *it;
-        if(condition->isRelevant(retrievedElements[code], code))
+        std::string retrievedCode = *it;
+	std::string retrievedClass = retrievedElements.at(retrievedCode);
+        if(condition->isRelevant(retrievedClass, retrievedCode))
             accumulator++;
         index++;
         if(index%step==0){

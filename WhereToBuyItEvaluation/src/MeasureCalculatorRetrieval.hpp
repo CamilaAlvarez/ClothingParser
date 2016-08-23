@@ -33,7 +33,7 @@ public:
 class ExactRelevantCalculator : public RelevantConditionCalculator{
 public:
     bool isRelevant(std::string retrievedClass, std::string retrievedId){
-        return !(expectedProd.compare((*retrievalVsProd)[retrievedId]));
+        return !(retrievedClass.compare(expectedClass) || expectedProd.compare((*retrievalVsProd)[retrievedId]));
     }
     ExactRelevantCalculator(std::string expectedProduct, std::string expectedClass, std::map<std::string,
             std::string>* retrievalMap): RelevantConditionCalculator(expectedProduct, expectedClass, retrievalMap){};
