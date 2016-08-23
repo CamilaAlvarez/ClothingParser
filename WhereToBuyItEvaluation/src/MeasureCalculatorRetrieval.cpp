@@ -74,36 +74,6 @@ std::vector<double> MeasureCalculatorRetrieval::calculatePrecision(std::string e
     return precisionVector;
 }
 
-std::vector<float> MeasureCalculatorRetrieval::calculateAverageAccuracyVsRetrieved(int step, int retrievedNumber) {
-
-    std::vector<float> recallVsRetrieved(ceil((double)retrievedNumber/(double)step), 0);
-    #ifdef _OPENMP
-    omp_lock_t lock;
-	omp_init_lock(&lock);
-    #endif
-    #pragma omp parallel for
-    for(int i = 0; i < keyListQueryList.size(); i++){
-        std::string query = keyListQueryList[i];
-        std::string queryClass = queryList[query];
-        std::vector<std::string> retrievedClasses = loadQueryFileToVector(query.c_str(), 3);
-        #ifdef _OPENMP
-        omp_set_lock(&lock);
-        #endif
-        //correctlyRetrievedItemsByStep(step, recallVsRetrieved, queryClass, retrievedClasses);
-        #ifdef _OPENMP
-        omp_unset_lock(&lock);
-        #endif
-    }
-    #ifdef _OPENMP
-    omp_destroy_lock(&lock);
-    #endif
-    for(int i = 0; i < recallVsRetrieved.size(); i++){
-        recallVsRetrieved[i] = recallVsRetrieved[i]/queryList.size();
-    }
-
-    return recallVsRetrieved;
-
-}
 
 std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateAccuracyVsRetrieved(int step, int retrievedNumber){
     std::function<RelevantConditionCalculator* (std::string, std::string)> condCalculator = [](std::string query,
@@ -113,49 +83,6 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateA
     };
 
     return genericAccuracyVsRetrieved(step, retrievedNumber, condCalculator);
-    /*std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
-    int stepNumber = ceil((double)retrievedNumber/(double)step);
-    std::map<std::string, int> queriesClasses;
-    int count = 0;
-    #ifdef _OPENMP
-    omp_lock_t lock;
-	omp_init_lock(&lock);
-    #endif
-    #pragma omp parallel for
-    for(int i = 0; i < keyListQueryList.size(); i++ ){
-        std::string query = keyListQueryList[i];
-        std::string queryClass = queryList[query];
-        std::vector<std::string> retrievedClasses = loadQueryFileToVector(query.c_str(), 3);
-        std::vector<float> auxVector(stepNumber, 0);
-        correctlyRetrievedItemsByStep(step, auxVector, queryClass, retrievedClasses);
-    #ifdef _OPENMP
-        omp_set_lock(&lock);
-    #endif
-        if(count%100==0){
-            std::cout<<"PROCESSED: "<<count<<std::endl;
-        }
-        if(accuracyVsRetrievedByClass.find(queryClass) == accuracyVsRetrievedByClass.end())
-            accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber, 0);
-        if(queriesClasses.find(queryClass) == queriesClasses.end())
-            queriesClasses[queryClass] = 0;
-        queriesClasses[queryClass]++;
-        count++;
-        for(int j = 0; j < auxVector.size(); j++)
-            accuracyVsRetrievedByClass[queryClass][j] += auxVector[j];
-    #ifdef _OPENMP
-        omp_unset_lock(&lock);
-    #endif
-    }
-    #ifdef _OPENMP
-    omp_destroy_lock(&lock);
-    #endif
-    for(std::map<std::string, int>::iterator it = queriesClasses.begin(); it!=queriesClasses.end(); ++it){
-        for(int i = 0; i < accuracyVsRetrievedByClass[it->first].size(); i++){
-            accuracyVsRetrievedByClass[it->first][i] /= it->second;
-        }
-    }
-
-    return accuracyVsRetrievedByClass;*/
 }
 
 void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::vector<float>& recallVector, RelevantConditionCalculator* condition,
@@ -263,53 +190,6 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateE
     };
     std::cout<<"CALCULATING EXACT ACCURACY VS RETRIEVAL"<<std::endl;
     return genericAccuracyVsRetrieved(step, retrievedNumber, condBuilder);
-    /*std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
-    int stepNumber = ceil((double)retrievedNumber/(double)step);
-    std::map<std::string, int> queriesClasses;
-    int count = 0;
-#ifdef _OPENMP
-    omp_lock_t lock;
-	omp_init_lock(&lock);
-#endif
-#pragma omp parallel for
-    for(int i = 0; i < keyListQueryList.size(); i++ ){
-        std::string query = keyListQueryList[i];
-        std::string queryClass = queryList[query];
-        std::map<std::string, std::string> retrievedCodesClasses = loadFileToMap(query.c_str(), 2, 3);
-        std::vector<float> auxVector(stepNumber, 0);
-        std::size_t start = query.find_last_of("/");
-        std::size_t end = query.fin_last_of(".");
-        std::string code = query.substr(start+1, end);
-        ExactRelevantCalculator conditionCalculator(expectedProduct, queryClass, &retrievalVsProducts);
-        correctlyRetrievedItemsByStep(step, auxVector, &conditionCalculator, retrievedCodeClasses);
-#ifdef _OPENMP
-        omp_set_lock(&lock);
-#endif
-        if(count%100==0){
-            std::cout<<"PROCESSED: "<<count<<std::endl;
-        }
-        if(accuracyVsRetrievedByClass.find(queryClass) == accuracyVsRetrievedByClass.end())
-            accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber, 0);
-        if(queriesClasses.find(queryClass) == queriesClasses.end())
-            queriesClasses[queryClass] = 0;
-        queriesClasses[queryClass]++;
-        count++;
-        for(int j = 0; j < auxVector.size(); j++)
-            accuracyVsRetrievedByClass[queryClass][j] += auxVector[j];
-#ifdef _OPENMP
-        omp_unset_lock(&lock);
-#endif
-    }
-#ifdef _OPENMP
-    omp_destroy_lock(&lock);
-#endif
-    for(std::map<std::string, int>::iterator it = queriesClasses.begin(); it!=queriesClasses.end(); ++it){
-        for(int i = 0; i < accuracyVsRetrievedByClass[it->first].size(); i++){
-            accuracyVsRetrievedByClass[it->first][i] /= it->second;
-        }
-    }
-
-    return accuracyVsRetrievedByClass;*/
 };
 
 std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAccuracyVsRetrieved(int step, int retrievedNumber,
@@ -318,6 +198,8 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
     int stepNumber = ceil((double)retrievedNumber/(double)step);
     std::map<std::string, int> queriesClasses;
     int count = 0;
+    accuracyVsRetrievedByClass["average"] = std::vector<float>(stepNumber,0);
+    queriesClasses["average"] = 0;
 #ifdef _OPENMP
     omp_lock_t lock;
 	omp_init_lock(&lock);
@@ -343,9 +225,12 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
         if(queriesClasses.find(queryClass) == queriesClasses.end())
             queriesClasses[queryClass] = 0;
         queriesClasses[queryClass]++;
+        queriesClasses["average"]++;
         count++;
-        for(int j = 0; j < auxVector.size(); j++)
+        for(int j = 0; j < auxVector.size(); j++) {
             accuracyVsRetrievedByClass[queryClass][j] += auxVector[j];
+            accuracyVsRetrievedByClass["average"][j] += auxVector[j];
+        }
 #ifdef _OPENMP
         omp_unset_lock(&lock);
 #endif
