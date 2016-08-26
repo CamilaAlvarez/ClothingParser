@@ -18,6 +18,7 @@ public:
     RelevantConditionCalculator(std::string expectedClass):expectedClass(expectedClass){}
     RelevantConditionCalculator(std::string expectedProduct, std::string expectedClass, std::map<std::string,
             std::string>* retrievalMap): expectedProd(expectedProduct), retrievalVsProd(retrievalMap), expectedClass(expectedClass){}
+    std::string getExcpectedClass(){ return expectedClass; }
 protected:
     std::string expectedProd;
     std::string expectedClass;
