@@ -93,9 +93,10 @@ void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::ve
     for (std::vector<std::string>::const_iterator it = retrievedCodes.begin(); it!=retrievedCodes.end(); ++it) {
         std::string retrievedCode = *it;
 	std::string retrievedClass = retrievedElements.at(retrievedCode);
+        std::string expectedClass = condition->getExcpectedClass();
         if(condition->isRelevant(retrievedClass, retrievedCode))
             accumulator++;
-        if(!retrievedClass.compare(condition->getExcpectedClass()))
+        if(!retrievedClass.compare(expectedClass))
             index++;
         if(index%step==0){
             recallVector[resultNumber] += accumulator>0;
