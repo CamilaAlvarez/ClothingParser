@@ -90,7 +90,7 @@ void ExperimentEvaluator<Distance>::runRetrievalExperiments(const std::string& o
         #ifdef _OPENMP
             omp_unset_lock(&lock);
 	    #endif
-	    results = search(query);
+	    results = search(query,imageClassMap[key]);
         std::stringstream resultString;
         for(int j = 0; j<results.size(); j++){
             std::string id = results[j].getId();
@@ -117,11 +117,13 @@ void ExperimentEvaluator<Distance>::runRetrievalExperiments(const std::string& o
 }
 
 template<class Distance>
-std::vector<search2::ResultPair> ExperimentEvaluator<Distance>::search(const float *query, int K) {
+std::vector<search2::ResultPair> ExperimentEvaluator<Distance>::search(const float *query, const std::string& expectedClass, int K) {
     Distance d;
     float dist = 0;
     std::vector<search2::ResultPair> results;
     for(map_iter it=retrievalMap.begin(); it!=retrievalMap.end(); ++it){
+        //if(expectedClass.compare(imageClassMap[it->first]))
+        //    continue;
         dist = d.getDistance(query, it->second, descSize);
         results.push_back(search2::ResultPair(it->first, dist));
     }

@@ -33,8 +33,10 @@ private:
     std::map<std::string, float*> retrievalMap;
     std::map<std::string, std::string> imageClassMap;
     std::map<std::string, int> classMap;
+    std::map<std::string, std::string> retrievalClasses;
+    std::map<std::string, std::string> testingClasses;
     int descSize;
-    std::vector<search2::ResultPair> search(const float* query, int K = -1);
+    std::vector<search2::ResultPair> search(const float* query, const std::string& expectedClass, int K = -1);
     void load(const std::map<std::string, float*> &descriptors, const std::string &retrievalCodes,
               const std::string &testingCodes, const std::string &classesFile);
 public:

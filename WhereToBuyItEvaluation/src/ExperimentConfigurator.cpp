@@ -18,7 +18,7 @@ ExperimentConfigurator::ExperimentConfigurator(const std::string &configFile):
     JUtil::jmsr_assert(configuration.isDefined("TESTING_FILE"), "Missing TESTING_FILE parameter");
     JUtil::jmsr_assert(configuration.isDefined("IMAGES_CLASSES"), "Missing IMAGES_CLASSES parameter");
     JUtil::jmsr_assert(configuration.isDefined("OUTPUT_DIR"), "Missing OUTPUT_DIR parameter");
-
+    JUtil::jmsr_assert(configuration.isDefined("RETRIEVAL_ITEMS_PRODUCTS"), "Missing RETRIEVAL_ITEMS_PRODUCTS parameter");
     JUtil::jmsr_assert(configuration.isDefined("CALCULATE_DESCRIPTORS"), "Missing CALCULATE_DESCRIPTORS parameter");
 }
 
@@ -31,6 +31,7 @@ void ExperimentConfigurator::executeExperiment() {
     std::string classesFile = configuration.getValue("IMAGES_CLASSES");
     std::string outputDir = configuration.getValue("OUTPUT_DIR");
     std::map<std::string, float*> descriptors;
+    std::string retrievalVsProductsFile = configuration.getValue("RETRIEVAL_ITEMS_PRODUCTS");
 
     if(outputDir[outputDir.length()-1]!='/')
         outputDir += "/";
@@ -49,9 +50,7 @@ void ExperimentConfigurator::executeExperiment() {
     //Run experiments
     if(configuration.isDefined("EXPERIMENT_TYPE") && (!calculateDescriptors.compare("YES") || !calculateDescriptors.compare("LOAD"))) {
         if (!experimentType.compare("RETRIEVAL")) {
-            JUtil::jmsr_assert(configuration.isDefined("RETRIEVAL_IMAGES"), "Missing RETRIEVAL_IMAGES parameter");
-            std::string retrievalImages = configuration.getValue("RETRIEVAL_IMAGES");
-            ExperimentEvaluator<JL2> evaluator(descriptors, retrievalImages, testingImages, classesFile);
+            ExperimentEvaluator<JL2> evaluator(descriptors, retrievalVsProductsFile, testingImages, classesFile);
             evaluator.runRetrievalExperiments(outputDir);
         }
         else if (!experimentType.compare("CLASSIFICATION")) {
@@ -71,8 +70,6 @@ void ExperimentConfigurator::executeExperiment() {
             int step = std::stoi(configuration.getValue("STEP"));
             JUtil::jmsr_assert(configuration.isDefined("RETRIEVED_ITEMS"), "Missing RETRIEVED_ITEMS parameter");
             int retrievedNumber = std::stoi(configuration.getValue("RETRIEVED_ITEMS"));
-            JUtil::jmsr_assert(configuration.isDefined("RETRIEVAL_ITEMS_PRODUCTS"), "Missing RETRIEVAL_ITEMS_PRODUCTS parameter");
-            std::string retrievalVsProductsFile = configuration.getValue("RETRIEVAL_ITEMS_PRODUCTS");
             MeasureCalculatorRetrieval calc(queriesFile, classesFile);
 
 
