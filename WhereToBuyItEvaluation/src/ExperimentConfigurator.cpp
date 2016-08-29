@@ -59,7 +59,9 @@ void ExperimentConfigurator::executeExperiment() {
            // manager.destroyDescriptors(configuration);
         }
     }
-
+   else{
+	std::cout<<"CANNOT RUN EXPERIMENT WITHOUT DESCRIPTORS"<<std::endl;
+}
     //Calculate measurements
     if(configuration.isDefined("CALCULATE_MEASUREMENTS")){
         //query file must exist

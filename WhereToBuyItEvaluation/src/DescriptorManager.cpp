@@ -43,6 +43,7 @@ void DescriptorManager::calculateDescriptors(const std::string &image_filename) 
 		    std::cout<<image<<std::endl;
 		    float *desc = this->predictor.getCaffeDescriptor(image, &desc_size, desc_layer_name);
             Preprocessing::normalizeVector(desc, desc_size, jmsr::ROOT_UNIT);
+	//std::cout<<"DESCRIPTOR SIZE: "<<desc_size<<std::endl;
         	//To avoid memory leaks
 		    std::cout<<"CALCULATED DESCRIPTOR FOR: "<<image<<std::endl;
         	if(descriptor_map.find(iter->first)!=descriptor_map.end())
