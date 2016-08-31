@@ -17,7 +17,6 @@
 
 using json = nlohmann::json;
 
-std::string photoDirectory;
 std::string finalDirectory;
 std::map<std::string, std::string> photoMap;
 
@@ -69,8 +68,7 @@ void parseJson(std::string filename, json& resultContainer, std::string category
 int main(int argc, char *argv[]) {
 
     std::string jsonDirectory = std::string(argv[1]);
-    photoDirectory = std::string(argv[2]);
-    finalDirectory = std::string(argv[3]);
+    finalDirectory = std::string(argv[2]);
     size_t size;
     char line[1000];
     const char* f = map_file("/home/calvarez/Datasets/DatasetStreet2Shop/photos/images.txt", size);
