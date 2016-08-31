@@ -1,10 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include "json.hpp"
-#include <thread>
-#include <mutex>
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
 
 //for mmap (memory map)
 #include <sys/mman.h>
@@ -12,7 +8,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
-#define THREAD_NUMBER 8
 
 
 using json = nlohmann::json;
