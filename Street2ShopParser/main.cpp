@@ -117,6 +117,11 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
 	    std::cout<<"name: "<<name<<std::endl;
             cv::Mat productImg = img(rect);
 
+            if(0>left || 0 > width || left+width > productImg.cols || 0 > top || 0 > height || top+height > productImg.rows){
+		std::cout<<photo<<std::endl;		    
+		m->lock();
+		continue;
+	    }
             std::string boxString = "["+std::to_string(left)+","+std::to_string(top)+
                     ","+std::to_string(width)+","+std::to_string(height)+"]";
             std::string filename = finalDirectory+type+"/"+category+"/"+boxString+"-"+photo+".jpg?"+std::to_string(product);
@@ -215,7 +220,7 @@ int main(int argc, char *argv[]) {
     std::mutex retrievalMutex;
     std::mutex testingMutex;
     std::mutex trainingMutex;
-    std::thread thread;
+    std::thread* thread;    
     for (int i = 0; i < THREAD_NUMBER; i++) {
         if(i<2){
             threads.push_back(std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex));
