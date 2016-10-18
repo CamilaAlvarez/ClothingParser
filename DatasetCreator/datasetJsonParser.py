@@ -12,6 +12,7 @@ def createCorrectDataset(jsonLocation, baseImageLocation, baseNewDataset):
                 categoryDirectory = baseNewDataset+category+"/"
                 if not os.path.exists(categoryDirectory):
                     os.makedirs(categoryDirectory)
+                print "Copy file: "+filename+" of category: "+category
                 copyfile(baseImageLocation+filename, categoryDirectory+filename)
 
 createCorrectDataset("/home/calvarez/outdoorImages.json", "/home/calvarez/Datasets/Street2Shop/Images/", "/home/calvarez/ClothinParsing/")
