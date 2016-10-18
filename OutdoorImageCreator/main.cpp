@@ -52,7 +52,7 @@ void parseJson(std::string filename, json& resultContainer, std::string category
         if(resultContainer.find(photoIdStr) == resultContainer.end())
             resultContainer[photoIdStr] = {};
         std::string imageFilename = photoMap[photoIdStr];
-        unsigned long finalSlash = filename.find_last_of("/");
+        unsigned long finalSlash = imageFilename.find_last_of("/\\");
         imageFilename = imageFilename.substr(finalSlash+1);
         resultContainer[photoIdStr].push_back({{"bbox", element["bbox"]},
                                        {"category", category},
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 
     ss.open(finalDirectory+"outdoorImages.txt");
     for(std::map<std::string, std::string>::iterator it = outdoorImages.begin(); it != outdoorImages.end(); ++it){
-        ss<<it->first<<"\t"<<it->second<<std::endl;
+        ss<<it->second<<std::endl;
     }
     ss.close();
     return 0;
