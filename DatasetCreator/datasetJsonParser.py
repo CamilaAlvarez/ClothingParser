@@ -13,4 +13,4 @@ def createCorrectDataset(jsonLocation, baseImageLocation, baseNewDataset):
                 os.makedirs(categoryDirectory)
             copyfile(baseImageLocation+filename, categoryDirectory+filename)
 
-createCorrectDataset("/home/calvarez/outdoorImages.json", "/home/calvarez/Datasets/Street2Shop/Images/", "/home/calvarez/ClothinParsing")
+createCorrectDataset("/home/calvarez/outdoorImages.json", "/home/calvarez/Datasets/Street2Shop/Images/", "/home/calvarez/ClothinParsing/")
