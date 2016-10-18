@@ -99,13 +99,16 @@ void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::ve
             accumulator++;
         if(!retrievedClass.compare(expectedClass))
             index++;
+	if(resultNumber >= recallVector.size()){
+		break;
+}
         if(index%step==0 && index!=old_index){
 	    old_index = index;
             recallVector[resultNumber] += accumulator>0;
             resultNumber++;
         }
     }
-    if(index%step!=0)
+    if(index%step!=0 && resultNumber < recallVector.size())
         recallVector[resultNumber] += accumulator>0;
 }
 
@@ -199,10 +202,10 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateE
 std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAccuracyVsRetrieved(int step, int retrievedNumber,
                                                                      std::function<RelevantConditionCalculator* (std::string, std::string)> conditionBuilder){
     std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass;
-    int stepNumber = ceil((double)retrievedNumber/(double)step);
+    int stepNumber = ceil((double)100/(double)step);
     std::map<std::string, int> queriesClasses;
     int count = 0;
-    accuracyVsRetrievedByClass["average"] = std::vector<float>(stepNumber,0);
+    accuracyVsRetrievedByClass["average"] = std::vector<float>(stepNumber+1,0);
     queriesClasses["average"] = 0;
 #ifdef _OPENMP
     omp_lock_t lock;
@@ -214,7 +217,7 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
         std::string queryClass = queryList[query];
         std::map<std::string, std::string> retrievedCodeClasses = loadFileToMap(query.c_str(), 2, 3);
         std::vector<std::string> retrievedCodes = loadQueryFileToVector(query.c_str());
-        std::vector<float> auxVector(stepNumber, 0);
+        std::vector<float> auxVector(stepNumber+1, 0);
         RelevantConditionCalculator* conditionCalculator = conditionBuilder(query, queryClass);
         correctlyRetrievedItemsByStep(step, auxVector, conditionCalculator, retrievedCodeClasses, retrievedCodes);
         delete conditionCalculator;
@@ -225,7 +228,7 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
             std::cout<<"PROCESSED: "<<count<<std::endl;
         }
         if(accuracyVsRetrievedByClass.find(queryClass) == accuracyVsRetrievedByClass.end())
-            accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber, 0);
+            accuracyVsRetrievedByClass[queryClass] = std::vector<float>(stepNumber+1, 0);
         if(queriesClasses.find(queryClass) == queriesClasses.end())
             queriesClasses[queryClass] = 0;
         queriesClasses[queryClass]++;
@@ -247,6 +250,6 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::genericAcc
             accuracyVsRetrievedByClass[it->first][i] /= it->second;
         }
     }
-
+	std::cout<<"FINISHED"<<std::endl;
     return accuracyVsRetrievedByClass;
 }
