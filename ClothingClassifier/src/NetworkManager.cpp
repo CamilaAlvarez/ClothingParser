@@ -11,12 +11,10 @@ NetworkManager::NetworkManager(const std::string &config_file):network_config_fi
     JUtil::jmsr_assert(network_config_file.isDefined("CAFFE_DIR"), "Missing CAFFE_DIR parameter");
     JUtil::jmsr_assert(network_config_file.isDefined("PROTOTXT"), "Missing PROTOTXT parameter");
     JUtil::jmsr_assert(network_config_file.isDefined("CAFFE_MODEL"), "Missing CAFFE_MODEL parameter");
-    JUtil::jmsr_assert(network_config_file.isDefined("LAYER_NAME"), "Missing LAYER_NAME parameter");
     JUtil::jmsr_assert(network_config_file.isDefined("IMAGE_WIDTH"), "Missing IMAGE_WIDTH parameter");
     JUtil::jmsr_assert(network_config_file.isDefined("IMAGE_HEIGHT"), "Missing IMAGE_HEIGHT parameter");
     JUtil::jmsr_assert(network_config_file.isDefined("CAFFE_MODE"), "Missing CAFFE_MODE parameter");
 
-    desc_layer_name = network_config_file.getValue("LAYER_NAME");
     std::string dir = network_config_file.getValue("CAFFE_DIR");
     std::string prototxt = dir+network_config_file.getValue("PROTOTXT");
     std::string caffe_model = dir+network_config_file.getValue("CAFFE_MODEL");
@@ -28,14 +26,16 @@ NetworkManager::NetworkManager(const std::string &config_file):network_config_fi
     std::cout<<"LOADING OK!"<<std::endl;
 }
 
-float* NetworkManager::getLayer(std::string layer_name, float &descriptor_size) {
+float* NetworkManager::getLayer(const std::string &layer_name, int *descriptor_size,const std::string &image_file) {
     try {
-        float *desc = this->predictor.getCaffeDescriptor(image, descriptor_size, desc_layer_name);
+	std::cout<<layer_name<<std::endl;
+        float *desc = this->predictor.getCaffeDescriptor(image_file, descriptor_size, layer_name);
+	return desc;
     }
     catch(const std::runtime_error &e){
-        std::cout<<"INVALID IMAGE: "<<image<<std::endl;
+        std::cout<<"INVALID IMAGE: "<<image_file<<std::endl;
+	return NULL;
     }
-    return desc;
 }
 
 NetworkManager::~NetworkManager() { }

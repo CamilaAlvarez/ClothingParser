@@ -60,7 +60,7 @@ void ExperimentEvaluator<Distance>::load(const std::map<std::string, float*> &de
 
 template <class Distance>
 ExperimentEvaluator<Distance>::ExperimentEvaluator(const std::map<std::string, float*> &descriptorsMap, const std::string &retrievalCodes,
-                                                   const std::string &testingCodes, const std::string &classesFile) {
+                                                   const std::string &testingCodes, const std::string &classesFile, int descSize): descSize(descSize) {
     load(descriptorsMap, retrievalCodes, testingCodes, classesFile);
 }
 
@@ -78,8 +78,13 @@ void ExperimentEvaluator<Distance>::runRetrievalExperiments(const std::string& o
     int count = 0; 
     #pragma omp parallel for
     for(int i = 0; i < testKeys.size(); i++){
-        std::vector<search2::ResultPair> results;
-	    std::string key = testKeys[i];
+        	std::vector<search2::ResultPair> results;
+	    	std::string key = testKeys[i];
+	 	 if(testDesc.find(key)==testDesc.end()){
+			std::cout<<"TEST IMAGE NOT FOUND: "<<key<<std::endl;
+			continue;
+		}
+		
 	    float *query = testDesc[key];
         std::string filename = dir+imageClassMap[key]+"/"+key+".txt";
 	    #ifdef _OPENMP
@@ -87,7 +92,7 @@ void ExperimentEvaluator<Distance>::runRetrievalExperiments(const std::string& o
 	    #endif
 	    std::cout<<"BEGAN SEARCH NUMBER "<<++count<<" FOR: "<<key<<std::endl;
         perfomedExperiments[filename] = imageClassMap[key];
-        #ifdef _OPENMP
+	 #ifdef _OPENMP
             omp_unset_lock(&lock);
 	    #endif
 	    results = search(query,imageClassMap[key]);

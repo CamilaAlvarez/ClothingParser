@@ -41,7 +41,7 @@ private:
               const std::string &testingCodes, const std::string &classesFile);
 public:
     ExperimentEvaluator(const std::map<std::string, float*> &descriptors, const std::string &retrievalCodes,
-                        const std::string &testingCodes, const std::string &classesFile);
+                        const std::string &testingCodes, const std::string &classesFile, int descSize);
     void runRetrievalExperiments(const std::string& outputDir);
     ~ExperimentEvaluator();
 };

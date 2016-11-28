@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     }
     std::string argument_name = "-configFile=";
     std::string argument = argv[1];
-    if(!argument.compare(0, argument_name.length(), argument_name)!=0){
+    if(argument.compare(0, argument_name.length(), argument_name)!=0){
         std::cout<<"MISSING ARGUMENT -configFile=<config_file>"<<std::endl;
         exit(1);
     }
@@ -40,15 +40,22 @@ int main(int argc, char** argv) {
         std::istringstream stream_line(line);
         std::string image;
         int image_class;
-        float descriptor_size;
+        int descriptor_size;
         if (!(stream_line >> image >> image_class)) { break; } // error
-        float *probs = manager.getLayer("prob", descriptor_size, image);
+        float *probs = manager.getLayer("prob", &descriptor_size, image);
+	if(probs == NULL)
+		continue;
         float class_prob = probs[image_class];
         std::cout<<"Descriptor size: "<<descriptor_size<<std::endl;
         std::cout<<"Expected class "<<image_class<<" probability: "<<class_prob<<std::endl;
         std::ostringstream ss;
-        ss << image_class << "\t" << class_prob << std::endl;
+        ss << image << "\t" << image_class << "\t" << class_prob<<"\t";
+	for(int i = 0; i < descriptor_size; i++){
+		ss << i << ":" << probs[i] << ",";
+	} 
+	ss<<std::endl;
         results.push_back(ss.str());
+	delete probs;
     }
 
     std::ofstream outfile;

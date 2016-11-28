@@ -90,10 +90,9 @@ void DescriptorManager::destroyDescriptors(const std::map<std::string, float *>&
         delete iter->second;
 }
 
-std::map<std::string, float *> DescriptorManager::loadDescriptors(const std::string &descriptorsFile) {
+std::map<std::string, float *> DescriptorManager::loadDescriptors(const std::string &descriptorsFile, int *desc_size) {
     std::cout<<"OPEN DESCRIPTORS FILE"<<std::endl;
-    int desc_size;
-    std::map<std::string, float *> descriptor_map = loadFileToFloatMap(descriptorsFile.c_str(), &desc_size);
+    std::map<std::string, float *> descriptor_map = loadFileToFloatMap(descriptorsFile.c_str(), desc_size);
     std::cout<<"LOADED DESCRIPTORS FILE"<<std::endl;
     return descriptor_map;
 

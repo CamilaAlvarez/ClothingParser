@@ -12,7 +12,7 @@
 class NetworkManager {
 public:
     NetworkManager(const std::string &config_file);
-    float * getLayer(std::string layer_name, float &descriptor_size, const std::string &image_file);
+    float * getLayer(const std::string &layer_name, int *descriptor_size, const std::string &image_file);
     ~NetworkManager();
 
 private:

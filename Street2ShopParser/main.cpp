@@ -75,19 +75,18 @@ void retrievalImgsFunction(json* retrievalJson, std::mutex* m){
         std::string cmd = "cp '" +name+"' '"+ finalDirectory+"retrieval/"+category+"/"+photoNumber+".jpg?"+std::to_string(product)+"'";
        	exec(cmd.c_str());
 	    std::cout<<"name: "<<name<<std::endl;
-        m->lock();
+       m->lock();
     }
     m->unlock();
 }
 
-void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
-    m->lock();
+void cropPhotoFunction(json* contentJson,  std::string type){
+	std::cout<<"AQUI"<<std::endl;
     while(contentJson->size()>0){
         json::iterator keyValue = contentJson->begin();
         std::string photo = keyValue.key();
         json value = keyValue.value();
         contentJson->erase(photo);
-        m->unlock();
 	while(photo.length()<9){
 		photo = "0"+photo;
 	}
@@ -98,7 +97,6 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
         cv::Mat img = cv::imread(name);
 	if(!img.data){
 		std::cout<<"corrupted image: "<<name<<std::endl;
-		m->lock();
 		continue;
 	}
         for(json& box : value){
@@ -117,20 +115,17 @@ void cropPhotoFunction(json* contentJson,  std::string type, std::mutex* m){
 	    std::cout<<"name: "<<name<<std::endl;
             cv::Mat productImg = img(rect);
 
-            if(0>left || 0 > width || left+width > productImg.cols || 0 > top || 0 > height || top+height > productImg.rows){
+           /* if(0>left || 0 > width || left+width > productImg.cols || 0 > top || 0 > height || top+height > productImg.rows){
 		std::cout<<photo<<std::endl;		    
-		m->lock();
 		continue;
-	    }
+	    }*/
             std::string boxString = "["+std::to_string(left)+","+std::to_string(top)+
                     ","+std::to_string(width)+","+std::to_string(height)+"]";
             std::string filename = finalDirectory+type+"/"+category+"/"+boxString+"-"+photo+".jpg?"+std::to_string(product);
             cv::imwrite(filename, productImg);    	
-	    //    std::cout<<"name: "<<filename<<std::endl;
+	    std::cout<<"name: "<<filename<<std::endl;
         }
-        m->lock();
     }
-    m->unlock();
 }
 
 void parseJson(std::string filename, json& resultContainer, std::string category){
@@ -222,20 +217,24 @@ int main(int argc, char *argv[]) {
     std::mutex trainingMutex;
     std::thread* thread;    
     for (int i = 0; i < THREAD_NUMBER; i++) {
-        if(i<2){
-            threads.push_back(std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex));
-        }
+        //if(i<2){
+           threads.push_back(std::thread(retrievalImgsFunction, &retrieval, &retrievalMutex));
+		//continue;
+        /*}
         else if(i<5){
             threads.push_back(std::thread(cropPhotoFunction, &testing,"testing", &testingMutex));
         }
         else{
             threads.push_back( std::thread(cropPhotoFunction, &training,"training", &trainingMutex));
-        }
+        }*/
 
     }
 
     for(std::thread& t : threads){
         t.join();
     }
+
+	cropPhotoFunction(&testing, "testing");
+	cropPhotoFunction(&training, "training");
     return 0;
 }

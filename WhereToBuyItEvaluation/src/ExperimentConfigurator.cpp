@@ -32,7 +32,7 @@ void ExperimentConfigurator::executeExperiment() {
     std::string outputDir = configuration.getValue("OUTPUT_DIR");
     std::map<std::string, float*> descriptors;
     std::string retrievalVsProductsFile = configuration.getValue("RETRIEVAL_ITEMS_PRODUCTS");
-
+    int desc_size;
     if(outputDir[outputDir.length()-1]!='/')
         outputDir += "/";
 
@@ -44,13 +44,13 @@ void ExperimentConfigurator::executeExperiment() {
         descriptors = manager.getDescriptorMap();
     }
     else if(!calculateDescriptors.compare("LOAD")){
-        descriptors = DescriptorManager::loadDescriptors(descFile);
+        descriptors = DescriptorManager::loadDescriptors(descFile, &desc_size);
     }
 
     //Run experiments
-    if(configuration.isDefined("EXPERIMENT_TYPE") && (!calculateDescriptors.compare("YES") || !calculateDescriptors.compare("LOAD"))) {
+    if(configuration.isDefined("EXPERIMENT_TYPE") && !calculateDescriptors.compare("LOAD")) {
         if (!experimentType.compare("RETRIEVAL")) {
-            ExperimentEvaluator<JL2> evaluator(descriptors, retrievalVsProductsFile, testingImages, classesFile);
+            ExperimentEvaluator<JL2> evaluator(descriptors, retrievalVsProductsFile, testingImages, classesFile, desc_size);
             evaluator.runRetrievalExperiments(outputDir);
         }
         else if (!experimentType.compare("CLASSIFICATION")) {
@@ -109,12 +109,12 @@ void ExperimentConfigurator::executeExperiment() {
                 it != accuracyVsRetrievedByClass.end(); ++it){
                 accuracyVsRetrievedStream<<it->first<<'\t'<<it->second<<std::endl;
             }
-            /*std::string finalString = accuracyVsRetrievedStream.str();
+            std::string finalString = accuracyVsRetrievedStream.str();
 	        std::string output = outputDir+"accuracyVsRetrieved.txt";
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
 
-            std::stringstream precisionRecallStream;
-            precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
+           /* std::stringstream precisionRecallStream;
+            //precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
             for(std::map<std::string, std::vector<float>>::iterator it = precisionVsRecall.begin();
                     it!=precisionVsRecall.end(); ++it){
                 precisionRecallStream<<it->first<<'\t'<<it->second<<std::endl;
