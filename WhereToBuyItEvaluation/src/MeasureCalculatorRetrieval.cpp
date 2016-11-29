@@ -51,12 +51,18 @@ float MeasureCalculatorRetrieval::calculateMAP() {
 
 double MeasureCalculatorRetrieval::calculateAveragePrecision(std::string expectedClass,
                                                     const std::vector<std::string>& retrievedClasses) {
-    double accumulator = 0;
-    std::vector<double> precisionVector = calculatePrecision(expectedClass, retrievedClasses);
-    for(std::vector<double>::iterator it=precisionVector.begin(); it!=precisionVector.end(); ++it){
-        accumulator += *it;
+    //std::vector<double> precisionVector = calculatePrecision(expectedClass, retrievedClasses);
+    double relevantItems = 0;
+    double accum = 0;
+
+    for(int i = 0; i < retrievedClasses.size(); i++){
+        if(expectedClass.compare(retrievedClasses[i]))
+            continue;
+        relevantItems++;
+        double precision = relevantItems/(i+1);
+        accum += precision;
     }
-    return accumulator/precisionVector.size();
+    return accum/relevantItems;
 }
 
 std::vector<double> MeasureCalculatorRetrieval::calculatePrecision(std::string expectedClass,
@@ -145,7 +151,7 @@ std::vector<float> MeasureCalculatorRetrieval::calculatePrecisionVsRecallForQuer
     for(int i = 0; i < retrievedClasses.size(); i++){
         if(!queryClass.compare(retrievedClasses[i])){
             relevant++;
-            retrievedVsPrecision[relevant] = (float)relevant/(float)i;
+            retrievedVsPrecision[relevant] = (float)relevant/(float)(i+1);
         }
     }
 
