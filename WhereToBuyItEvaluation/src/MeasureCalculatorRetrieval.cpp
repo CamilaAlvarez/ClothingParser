@@ -157,22 +157,24 @@ std::vector<float> MeasureCalculatorRetrieval::calculatePrecisionVsRecallForQuer
 
     std::vector<float> precisionRecall = std::vector<float>(11, 0);
     float currentMax = 0;
-    int index = 9;
-    int currentRetrieval = 0.9;
+    int index = 10;
+    float currentRetrieval = 0.9;
     int relevantNumber = 1;
     bool first = true;
-
+    int iterations = 0;	
     for(std::map<int, float>::reverse_iterator it=retrievedVsPrecision.rbegin(); it != retrievedVsPrecision.rend(); ++it){
         if(first) {
             precisionRecall[index] = it->second;
             relevantNumber = it->first;
             first = false;
+	    index--;
             currentMax = it->second;
             continue;
         }
         float retrieval = (float)it->first/relevantNumber;
-
+	std::cout<<"Iterations: "<<++iterations<<std::endl;
         if(retrieval < currentRetrieval){
+
             precisionRecall[index] = currentMax;
             currentRetrieval -= 0.1;
             index--;

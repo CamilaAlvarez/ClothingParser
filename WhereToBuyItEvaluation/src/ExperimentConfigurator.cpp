@@ -97,7 +97,7 @@ void ExperimentConfigurator::executeExperiment() {
             int retrievedNumber = std::stoi(configuration.getValue("RETRIEVED_ITEMS"));
             MeasureCalculatorRetrieval calc(queriesFile, classesFile);
 
-            float MAP = calc.calculateMAP();
+            float MAP = 0; /* calc.calculateMAP();*/
             //std::vector<float> averageAccuracyVsRetrieved = calc.calculateAverageAccuracyVsRetrieved(step, retrievedNumber);
             /*std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calc.calculateAccuracyVsRetrieved(step, retrievedNumber);*/
             std::map<std::string, std::vector<float>> precisionVsRecall = calc.calculatePrecisionVsRecall();
@@ -114,13 +114,13 @@ void ExperimentConfigurator::executeExperiment() {
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);*/
 
            std::stringstream precisionRecallStream;
-            //precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
+            precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
             for(std::map<std::string, std::vector<float>>::iterator it = precisionVsRecall.begin();
                     it!=precisionVsRecall.end(); ++it){
                 precisionRecallStream<<it->first<<'\t'<<it->second<<std::endl;
             }
-            finalString = precisionRecallStream.str();
-	    output = outputDir+"precisionVsRecall.txt";
+            std::string finalString = precisionRecallStream.str();
+	    std::string output = outputDir+"precisionVsRecall.txt";
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);
         }
     }
