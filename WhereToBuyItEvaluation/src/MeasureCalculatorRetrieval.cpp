@@ -22,8 +22,11 @@ MeasureCalculatorRetrieval::MeasureCalculatorRetrieval(const std::string &querie
         classesSize[it->first] = std::stoi(it->second);
 }
 
-float MeasureCalculatorRetrieval::calculateMAP() {
+std::map<std::string, double> MeasureCalculatorRetrieval::calculateMAP() {
     double accumulator = 0;
+    std::cout<<"CALCULATING MAP"<<std::endl;
+    std::map<std::string, double> mAPByClass;
+    std::map<std::string, double> classNumber;
     #ifdef _OPENMP
     omp_lock_t lock;
 	omp_init_lock(&lock);
@@ -37,6 +40,12 @@ float MeasureCalculatorRetrieval::calculateMAP() {
         #ifdef _OPENMP
         omp_set_lock(&lock);
         #endif
+	if(mAPByClass.find(queryClass)==mAPByClass.end()){
+		mAPByClass[queryClass] = 0;
+		classNumber[queryClass] = 0;
+	}
+	mAPByClass[queryClass] += aux;
+	classNumber[queryClass]++;
         accumulator += aux;
         #ifdef _OPENMP
         omp_unset_lock(&lock);
@@ -44,9 +53,16 @@ float MeasureCalculatorRetrieval::calculateMAP() {
     }
     #ifdef _OPENMP
     omp_destroy_lock(&lock);
-    #endif
-    double map = accumulator/queryList.size();
-    return (float)map;
+    #endif 
+    std::map<std::string, double> result;
+    double map = accumulator/queryList.size(); 
+    for(std::map<std::string, double>::iterator it = mAPByClass.begin(); it!= mAPByClass.end(); ++it){
+	double mAP = it->second;
+	result[it->first] = mAP/classNumber[it->first];
+    }
+    result["all queries"] = map;
+    std::cout<<"FINISH CALCULATING MAP"<<std::endl;
+    return result;
 }
 
 double MeasureCalculatorRetrieval::calculateAveragePrecision(std::string expectedClass,
@@ -120,18 +136,32 @@ void MeasureCalculatorRetrieval::correctlyRetrievedItemsByStep(int step, std::ve
 
 std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculatePrecisionVsRecall(){
     std::map<std::string, std::vector<float>> precisionRecallMap;
+    std::vector<float> averagePrecisionRecall= std::vector<float>(11, 0);
+    int queryNumber = keyListQueryList.size();
+    std::map<std::string, std::vector<float>> precisionRecallClass;
+    std::map<std::string, float> classNumber;
     #ifdef _OPENMP
     omp_lock_t lock;
 	omp_init_lock(&lock);
     #endif
     #pragma omp parallel for
-    for(int i = 0; i < keyListQueryList.size(); i++){
+    for(int i = 0; i < queryNumber; i++){
         std::string query = keyListQueryList[i];
-        std::string queryClass = queryList[query];
+	std::string queryClass = queryList[query];
         std::vector<float> precisionRecallQuery = calculatePrecisionVsRecallForQuery(query, queryClass);
     #ifdef _OPENMP
         omp_set_lock(&lock);
     #endif
+	if(precisionRecallClass.find(queryClass) == precisionRecallClass.end()){
+		precisionRecallClass[queryClass] = std::vector<float>(11,0);
+		classNumber[queryClass] = 0;
+	}
+	for(int j = 0; j<11; j++){
+		averagePrecisionRecall[j]+=precisionRecallQuery[j]/queryNumber;
+		precisionRecallClass[queryClass][j] += precisionRecallQuery[j];
+	}
+	classNumber[queryClass]++;
+	std::cout<<"CALCULATED FOR: "<<query<<std::endl;	
         precisionRecallMap[query] = precisionRecallQuery;
     #ifdef _OPENMP
         omp_unset_lock(&lock);
@@ -141,6 +171,14 @@ std::map<std::string, std::vector<float>> MeasureCalculatorRetrieval::calculateP
     #ifdef _OPENMP
     omp_destroy_lock(&lock);
     #endif
+    precisionRecallMap["AVERAGE"] = averagePrecisionRecall; 
+    for(std::map<std::string, std::vector<float>>::iterator it = precisionRecallClass.begin(); it!=precisionRecallClass.end(); ++it){
+	std::vector<float> resultPerClass = it->second;
+	for(int j = 0; j<11; j++){
+		resultPerClass[j] /= classNumber[it->first]; 
+	}
+	precisionRecallMap[it->first] = resultPerClass;
+    }
     return precisionRecallMap;
 }
 
@@ -172,7 +210,6 @@ std::vector<float> MeasureCalculatorRetrieval::calculatePrecisionVsRecallForQuer
             continue;
         }
         float retrieval = (float)it->first/relevantNumber;
-	std::cout<<"Iterations: "<<++iterations<<std::endl;
         if(retrieval < currentRetrieval){
 
             precisionRecall[index] = currentMax;
