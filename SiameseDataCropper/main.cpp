@@ -38,7 +38,7 @@ static std::vector<Pair> readPairsFile(const std::string &filename){
 
         int idOutdoor = std::stoi(lineParts[8]);
         BoundingBox* outdoorBBox = NULL;
-        if(lineParts[3].size() !=0 )
+        if(lineParts[10].size() !=0 )
             outdoorBBox = new BoundingBox(std::stoi(lineParts[10]),std::stoi(lineParts[11]),std::stoi(lineParts[12]),
                                           std::stoi(lineParts[13]),std::stoi(lineParts[14]));
         Image outdoorImage(idOutdoor, outdoorBBox, lineParts[9]);
