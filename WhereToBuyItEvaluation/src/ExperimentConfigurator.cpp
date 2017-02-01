@@ -97,7 +97,7 @@ void ExperimentConfigurator::executeExperiment() {
             int retrievedNumber = std::stoi(configuration.getValue("RETRIEVED_ITEMS"));
             MeasureCalculatorRetrieval calc(queriesFile, classesFile);
 
-            float MAP = 0; /* calc.calculateMAP();*/
+            std::map<std::string, double> MAP = calc.calculateMAP();
             //std::vector<float> averageAccuracyVsRetrieved = calc.calculateAverageAccuracyVsRetrieved(step, retrievedNumber);
             /*std::map<std::string, std::vector<float>> accuracyVsRetrievedByClass = calc.calculateAccuracyVsRetrieved(step, retrievedNumber);*/
             std::map<std::string, std::vector<float>> precisionVsRecall = calc.calculatePrecisionVsRecall();
@@ -114,7 +114,11 @@ void ExperimentConfigurator::executeExperiment() {
             writeToFile(finalString.c_str(), output.c_str(), (int)finalString.length()+1);*/
 
            std::stringstream precisionRecallStream;
-            precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
+            for(std::map<std::string,double>::iterator it = MAP.begin();
+                    it != MAP.end(); ++it){
+                precisionRecallStream<<"MAP "<<it->first<<'\t'<<it->second<<std::endl;
+            }
+            //precisionRecallStream<<"MAP"<<'\t'<<MAP<<std::endl;
             for(std::map<std::string, std::vector<float>>::iterator it = precisionVsRecall.begin();
                     it!=precisionVsRecall.end(); ++it){
                 precisionRecallStream<<it->first<<'\t'<<it->second<<std::endl;

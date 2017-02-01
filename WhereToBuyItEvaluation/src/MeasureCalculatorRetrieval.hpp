@@ -44,7 +44,7 @@ public:
 class MeasureCalculatorRetrieval: public MeasureCalculator {
 public:
     MeasureCalculatorRetrieval(const std::string &queriesFile, const std::string& classesFile); //Map query -> clase correcta
-    float calculateMAP();
+    std::map<std::string,double> calculateMAP();
     std::map<std::string, std::vector<float>> calculateAccuracyVsRetrieved(int step, int retrievedNumber);
     std::map<std::string, std::vector<float>> calculatePrecisionVsRecall();
     std::map<std::string, std::vector<float>> calculateExactAccuracyVsRetrieved(int step, int retrievedNumber,
