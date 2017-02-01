@@ -19,13 +19,13 @@ void Image::cutImage(const std::string &newDirectory) {
     if(height > chosenHeight){
         factor = height/chosenHeight;
     }
-    int rectHeight = boundingBox->getHeight()*factor;
-    int rectWidth = boundingBox->getWidth()*factor;
+    int rectHeight = static_cast<int>(boundingBox->getHeight()*factor);
+    int rectWidth = static_cast<int>(boundingBox->getWidth()*factor);
     if(rectHeight > height)
         rectHeight = height;
     if(rectWidth > width)
         rectWidth = width;
-    cv::Rect ROI(boundingBox->getX()*factor, boundingBox->getY()*factor,
+    cv::Rect ROI(static_cast<int>(boundingBox->getX()*factor), static_cast<int>(boundingBox->getY()*factor),
                  rectWidth,rectHeight);
     cv::Mat ROIImage = image(ROI);
     this->writeImage(newDirectory, ROIImage);
@@ -33,7 +33,7 @@ void Image::cutImage(const std::string &newDirectory) {
 }
 
 bool Image::writeImage(const std::string &newDirectory,const cv::Mat &image) {
-    std::osstringstream newImage;
+    std::ostringstream newImage;
     newImage << newDirectory << "/" << this->imageName;
-    cv::imwrite(newImage.str(), image);
+    return cv::imwrite(newImage.str(), image);
 }
